@@ -1,7 +1,7 @@
 package routers
 
 import (
-	"galactus/blade/api/device"
+	"galactus/blade/pkg/device"
 	"galactus/common/middleware/routers"
 
 	"github.com/gin-gonic/gin"
