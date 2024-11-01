@@ -48,5 +48,6 @@ func getGoroutineID() int {
 	if err != nil {
 		panic(fmt.Sprintf("cannot get goroutine id: %v", err))
 	}
+	fmt.Println("getGoroutineID", id)
 	return id
 }

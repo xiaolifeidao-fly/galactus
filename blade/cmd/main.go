@@ -1,11 +1,11 @@
 package main
 
 import (
-	"galactus/common/middleware/db"
-	"galactus/common/middleware/vipper"
+	"galactus/blade/a"
+	"galactus/blade/routers"
 )
 
-func Init() {
-	vipper.Init()
-	db.Init()
+func main() {
+	a.Init()
+	routers.Run()
 }

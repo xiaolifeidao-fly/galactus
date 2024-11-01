@@ -2,8 +2,10 @@ package db
 
 import (
 	"fmt"
+	"galactus/common/base/dto"
 	"time"
 
+	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 )
 
@@ -11,7 +13,7 @@ type BaseRepository[T Entity] interface {
 	FindById(id uint) (T, error)
 	FindAll() ([]T, error)
 	Create(entity T) (T, error)
-	Update(entity T) (T, error)
+	SaveOrUpdate(entity T) (T, error)
 	Delete(id uint) error
 	GetOne(sql string, values ...interface{}) (T, error)
 	GetList(sql string, values ...interface{}) ([]T, error)
@@ -26,16 +28,16 @@ func (r *Repository[T]) SetDb(db *gorm.DB) {
 	r.Db = db
 }
 
-func (r *Repository[T]) GetOne(sql string, values ...interface{}) (T, error) {
+func (r *Repository[T]) GetOne(sql string, values map[string]interface{}) (T, error) {
 	var repoValue *T = new(T)
-	err := r.Db.Raw(sql, values).Find(&repoValue).Error
+	err := r.Db.Raw(sql, values).Scan(&repoValue).Error
 	if err == gorm.ErrRecordNotFound {
 		return *repoValue, err
 	}
 	return *repoValue, nil
 }
 
-func (r *Repository[T]) GetList(sql string, values ...interface{}) ([]T, error) {
+func (r *Repository[T]) GetList(sql string, values map[string]interface{}) ([]T, error) {
 	var entities []T
 	err := r.Db.Raw(sql, values).Find(&entities).Error
 	if err == gorm.ErrRecordNotFound {
@@ -126,4 +128,32 @@ func (e *BaseEntity) Init() {
 	if e.UpdatedTime.IsZero() {
 		e.UpdatedTime = time.Now()
 	}
+}
+
+func ToPO[V any](dto dto.DTO) *V {
+	var voInstance V
+	copier.Copy(&voInstance, dto)
+	return &voInstance
+}
+
+func ToPOs[V any, D dto.DTO](dtos []D) []*V {
+	var vos []*V
+	for _, dto := range dtos {
+		vos = append(vos, ToPO[V](dto))
+	}
+	return vos
+}
+
+func ToDTO[D any](po Entity) *D {
+	var dtoInstance D
+	copier.Copy(&dtoInstance, po)
+	return &dtoInstance
+}
+
+func ToDTOs[D any, P Entity](vos []P) []*D {
+	var dtos []*D
+	for _, vo := range vos {
+		dtos = append(dtos, ToDTO[D](vo))
+	}
+	return dtos
 }
