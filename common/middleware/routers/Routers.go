@@ -2,6 +2,7 @@ package routers
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -13,6 +14,21 @@ const (
 	DefaultSuccessRes = "请求成功"
 	DefaultFailRes    = "请求失败"
 )
+
+func ToJson(context *gin.Context, data interface{}, err error) {
+	if err != nil {
+		context.JSON(http.StatusOK, gin.H{
+			"code":  FailCode,
+			"data":  nil,
+			"error": err.Error(),
+		})
+	}
+	context.JSON(http.StatusOK, gin.H{
+		"code":  SuccessCode,
+		"data":  data,
+		"error": nil,
+	})
+}
 
 type Option func(*gin.RouterGroup)
 
