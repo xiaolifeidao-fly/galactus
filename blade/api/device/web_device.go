@@ -57,6 +57,6 @@ func save(context *gin.Context) {
 }
 
 func list(context *gin.Context) {
-	devices, err := deviceService.ListWebDevice()
+	devices, err := deviceService.GetWebDeviceList()
 	routers.ToJson(context, converter.ToVOs[WebDevice](devices), err)
 }

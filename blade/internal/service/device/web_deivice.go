@@ -17,7 +17,7 @@ func SaveWebDevice(deviceDTO *dto.WebDevice) (*dto.WebDevice, error) {
 	return db.ToDTO[dto.WebDevice](device), nil
 }
 
-func ListWebDevice() ([]*dto.WebDevice, error) {
+func GetWebDeviceList() ([]*dto.WebDevice, error) {
 	devices, err := webDeviceRepository.FindAll()
 	if err != nil {
 		return nil, err
