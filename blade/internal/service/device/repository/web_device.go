@@ -33,6 +33,12 @@ type WebDevice struct {
 	EffectiveType     string `orm:"column(effective_type);size(32);null" description:"有效类型"`
 	RoundTripTime     string `orm:"column(round_trip_time);size(32);null" description:"往返时间"`
 	Webid             string `orm:"column(webid);size(32);null" description:"WebID"`
+	Uifid             string `orm:"column(uifid);size(1000);null" description:"UIFID"`
+	VerifyFp          string `orm:"column(verify_fp);size(500);null" description:"验证FP"`
+	Fp                string `orm:"column(fp);size(500);null" description:"FP"`
+	Ttwid             string `orm:"column(ttwid);size(500);null" description:"TTWID"`
+	OdinTt            string `orm:"column(odin_tt);size(500);null" description:"ODINTT"`
+	UserAgent         string `orm:"column(user_agent);size(500);null" description:"UserAgent"`
 }
 
 func (w *WebDevice) TableName() string {

@@ -15,3 +15,5 @@ log
 *.pyc
 dist
 voice_data
+
+__debug**

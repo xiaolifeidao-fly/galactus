@@ -4,7 +4,7 @@ import (
 	"galactus/common/base/dto"
 )
 
-type WebDevice struct {
+type WebDeviceDTO struct {
 	dto.BaseDTO
 	DevicePlatform    string `json:"devicePlatform" description:"设备平台"`
 	Aid               string `json:"aid" description:"应用ID"`
@@ -33,4 +33,10 @@ type WebDevice struct {
 	EffectiveType     string `json:"effectiveType" description:"有效类型"`
 	RoundTripTime     string `json:"roundTripTime" description:"往返时间"`
 	Webid             string `json:"webid" description:"WebID"`
+	Uifid             string `json:"uifid" description:"UIFID"`
+	VerifyFp          string `json:"verifyFp" description:"验证FP"`
+	Fp                string `json:"fp" description:"FP"`
+	Ttwid             string `json:"ttwid" description:"TTWID"`
+	OdinTt            string `json:"odinTt" description:"ODINTT"`
+	UserAgent         string `json:"userAgent" description:"ODINTT"`
 }

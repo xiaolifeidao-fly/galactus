@@ -8,19 +8,27 @@ import (
 
 var webDeviceRepository *repository.WebDeviceRepository = db.GetRepository[repository.WebDeviceRepository]()
 
-func SaveWebDevice(deviceDTO *dto.WebDevice) (*dto.WebDevice, error) {
+func SaveWebDevice(deviceDTO *dto.WebDeviceDTO) (*dto.WebDeviceDTO, error) {
 	device := db.ToPO[repository.WebDevice](deviceDTO)
 	device, err := webDeviceRepository.SaveOrUpdate(device)
 	if err != nil {
 		return nil, err
 	}
-	return db.ToDTO[dto.WebDevice](device), nil
+	return db.ToDTO[dto.WebDeviceDTO](device), nil
 }
 
-func GetWebDeviceList() ([]*dto.WebDevice, error) {
+func GetWebDeviceList() ([]*dto.WebDeviceDTO, error) {
 	devices, err := webDeviceRepository.FindAll()
 	if err != nil {
 		return nil, err
 	}
-	return db.ToDTOs[dto.WebDevice](devices), nil
+	return db.ToDTOs[dto.WebDeviceDTO](devices), nil
+}
+
+func FindWebDeviceById(id uint) (*dto.WebDeviceDTO, error) {
+	device, err := webDeviceRepository.FindById(id)
+	if err != nil {
+		return nil, err
+	}
+	return db.ToDTO[dto.WebDeviceDTO](device), nil
 }

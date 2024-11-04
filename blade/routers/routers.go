@@ -2,6 +2,7 @@ package routers
 
 import (
 	"galactus/blade/pkg/device"
+	"galactus/blade/pkg/dy"
 	"galactus/common/middleware/routers"
 
 	"github.com/gin-gonic/gin"
@@ -22,5 +23,7 @@ func Run(middleware ...gin.HandlerFunc) error {
 // InitAllRouters 初始化所有router
 
 func InitAllRouters(router *routers.GinRouter) {
-	router.Include(device.Routers)
+	router.Include(device.WebDeviceRouters)
+	router.Include(dy.UserRouters)
+
 }

@@ -1,25 +1,19 @@
 package db
 
 import (
-	"fmt"
+	"galactus/common/middleware/vipper"
 	"log"
 
-	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
 // Db 定义数据库全局变量
-var Db *gorm.DB
-
-func Init() {
-	fmt.Println(">>>> get database connection start <<<<")
-	Db = GetDataBase()
-}
+var Db *gorm.DB = GetDataBase()
 
 func GetDataBase() *gorm.DB {
-	sqlcon := viper.GetString("sqlconn")
+	sqlcon := vipper.GetString("sqlconn")
 	// 构建连接："用户名:密码@tcp(IP:端口)/数据库?charset=utf8"
 	log.Println("sql连接地址:", sqlcon)
 	// slowLogger := logger.New(

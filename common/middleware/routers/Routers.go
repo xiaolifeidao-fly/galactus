@@ -19,7 +19,7 @@ func ToJson(context *gin.Context, data interface{}, err error) {
 	if err != nil {
 		context.JSON(http.StatusOK, gin.H{
 			"code":  FailCode,
-			"data":  nil,
+			"data":  DefaultFailRes,
 			"error": err.Error(),
 		})
 	}
