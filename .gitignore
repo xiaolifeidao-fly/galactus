@@ -17,3 +17,5 @@ dist
 voice_data
 
 __debug**
+
+**/node_modules
