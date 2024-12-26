@@ -48,3 +48,8 @@ func (w *WebDevice) TableName() string {
 type WebDeviceRepository struct {
 	db.Repository[*WebDevice]
 }
+
+func (w *WebDeviceRepository) GetByWebid(webid string) (*WebDevice, error) {
+	device, err := w.GetOne("select * from web_device where webid = ?", webid)
+	return device, err
+}

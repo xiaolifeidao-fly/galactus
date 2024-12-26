@@ -4,7 +4,10 @@ go 1.21
 
 require galactus/common v0.0.0 // 版本可以是你实际的版本
 
-require github.com/gin-gonic/gin v1.10.0
+require (
+	github.com/gin-gonic/gin v1.10.0
+	github.com/spf13/cobra v1.8.1
+)
 
 require (
 	github.com/bytedance/sonic v1.11.6 // indirect
@@ -20,6 +23,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jinzhu/copier v0.4.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect

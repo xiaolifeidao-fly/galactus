@@ -1,0 +1,1 @@
+mvn clean package -pl com.barry:barry-bootstrap-pro -am -DskipTests

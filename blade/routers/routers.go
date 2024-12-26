@@ -25,5 +25,5 @@ func Run(middleware ...gin.HandlerFunc) error {
 func InitAllRouters(router *routers.GinRouter) {
 	router.Include(device.WebDeviceRouters)
 	router.Include(dy.UserRouters)
-
+	router.Include(dy.VideoRouters)
 }

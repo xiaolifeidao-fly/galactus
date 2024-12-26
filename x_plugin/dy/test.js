@@ -1,16 +1,43 @@
-const a_bogus = require('./a_bogus')
-const sign = require('./sign')
 
-arg = [
-    0,
-    1,
-    0,
-    "device_platform=webapp&aid=6383&channel=channel_pc_web&sec_user_id=MS4wLjABAAAAhOBSP8PO0aon_oFooFLWflQ-W3OAb0A1FqqBG6QSdYRgpGeLxBsNr5KzWdfQF3_X&max_cursor=1712142415000&locate_query=false&show_live_replay_strategy=1&need_time_list=0&time_list_query=0&whale_cut_token=&cut_version=1&count=18&publish_video_strategy_type=2&pc_client_type=1&version_code=290100&version_name=29.1.0&cookie_enabled=true&screen_width=1707&screen_height=960&browser_language=zh-CN&browser_platform=Win32&browser_name=Chrome&browser_version=124.0.0.0&browser_online=true&engine_name=Blink&engine_version=124.0.0.0&os_name=Windows&os_version=10&cpu_core_num=16&device_memory=8&platform=PC&downlink=10&effective_type=4g&round_trip_time=50&webid=7358077536355616295&msToken=djYvn98VAavxbhvI7x4seuulLvQVm6RcS8EAqxZ2DTEpQbddkBoHtC30dyUQNV1I_5aLwfrp2RG_THs15auQ8pOjw6YMIa_yLp2u5-syMFEqUAPlhHxLzlC8zSHbVJTt",
-    "",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-]
 
-document.cookie = "douyin.com; passport_csrf_token=ad84293d58d5208ab6888ba34ead4716; passport_csrf_token_default=ad84293d58d5208ab6888ba34ead4716; bd_ticket_guard_client_web_domain=2; FORCE_LOGIN=%7B%22videoConsumedRemainSeconds%22%3A180%2C%22isForcePopClose%22%3A1%7D; SEARCH_RESULT_LIST_TYPE=%22single%22; LOGIN_STATUS=1; my_rd=2; publish_badge_show_info=%221%2C0%2C0%2C1713949507346%22; pwa2=%220%7C0%7C2%7C0%22; __ac_nonce=0662a206900686077f222; __ac_signature=_02B4Z6wo00f01CLWkKAAAIDDecSAj6tJKqgi9pQAAG6m3DuuaCtNGdcDimUqhkONjDhYDbpzDalSakaxfTUWiPK-1qzuYSCYAQlTE74NeyIatUG2I7SpOEpnxKFl7-v0LWcLhYdp3az-bgDb72; douyin.com; device_web_cpu_core=3; device_web_memory_size=2; architecture=amd64; dy_swidth=1923; dy_sheight=927; stream_recommend_feed_params=%22%7B%5C%22cookie_enabled%5C%22%3Atrue%2C%5C%22screen_width%5C%22%3A1923%2C%5C%22screen_height%5C%22%3A927%2C%5C%22browser_online%5C%22%3Atrue%2C%5C%22cpu_core_num%5C%22%3A3%2C%5C%22device_memory%5C%22%3A2%2C%5C%22downlink%5C%22%3A%5C%22%5C%22%2C%5C%22effective_type%5C%22%3A%5C%22%5C%22%2C%5C%22round_trip_time%5C%22%3A0%7D%22; csrf_session_id=673901adb4240c8fceead116e5b1df59; FOLLOW_LIVE_POINT_INFO=%22MS4wLjABAAAAmYF-Y7BGKsLmNGOEDMpDBGO18L5eEuS0ktsxWmfrVBgmJoGfnoIViM3ZupvQmHnY%2F1714060800000%2F0%2F1714036848424%2F0%22; strategyABtestKey=%221714036849.045%22; volume_info=%7B%22isUserMute%22%3Afalse%2C%22isMute%22%3Atrue%2C%22volume%22%3A0.45%7D; xg_device_score=4.754887502163468; stream_player_status_params=%22%7B%5C%22is_auto_play%5C%22%3A0%2C%5C%22is_full_screen%5C%22%3A0%2C%5C%22is_full_webscreen%5C%22%3A1%2C%5C%22is_mute%5C%22%3A1%2C%5C%22is_speed%5C%22%3A1%2C%5C%22is_visible%5C%22%3A0%7D%22; IsDouyinActive=false; home_can_add_dy_2_desktop=%221%22; bd_ticket_guard_client_data=eyJiZC10aWNrZXQtZ3VhcmQtdmVyc2lvbiI6MiwiYmQtdGlja2V0LWd1YXJkLWl0ZXJhdGlvbi12ZXJzaW9uIjoxLCJiZC10aWNrZXQtZ3VhcmQtcmVlLXB1YmxpYy1rZXkiOiJCTWEyejg0NTRJUTVKd3lDZFdvZWhxTFlvQW1DQ0VyQmFPTUJqNjVVcE43ZkxVeUEwYzMxYU90dEV5SGR3dnlwd3cyVUhMaHFuWUkrK2s2NlB3NWRZTkU9IiwiYmQtdGlja2V0LWd1YXJkLXdlYi12ZXJzaW9uIjoxfQ%3D%3D; passport_fe_beating_status=false; msToken=FOCyHuHwBfXRCESKhvbyfbrASMH3c3IeNIAmTuwjcuFrIax6-x8gK_rHMfjGQpb6NIBMRwqf1yrOBLx25T4lJXgoSr_2D6J2h5-hyqJZf6bf_gCzVCecLWw8Sz1dfVo="
+function simulateTyping(inputElement, text, interval = 100) {
+  let index = 0;
 
-var data = a_bogus.get_a_bogus(arg)
-console.log(data)
+  // 清空输入框（可选）
+  inputElement.value = '';
+
+  // 定时器模拟逐个输入
+  const typingInterval = setInterval(() => {
+    // 添加字符
+    inputElement.value += text[index];
+    const inputEvent = new Event('input', {
+        isTrusted : true,
+        bubbles: true,      // 事件是否冒泡
+        cancelBubble : false,
+        cancelable: false,   // 事件是否可取消
+        composed : true,
+        data: inputElement.value,  // 输入框的新值
+        inputType: 'insertText',
+        isComposing: false,
+        defaultPrevented : false,
+        detail : 0,
+        eventPhase : 3,
+        isComposing : false,
+        returnValue : true,
+        timeStamp : 1020156.799999997,
+        which  : 0
+      });
+    inputElement.dispatchEvent(inputEvent);
+    // 如果已经输入完所有字符，清除定时器
+    index++;
+    if (index === text.length) {
+      clearInterval(typingInterval);
+    }
+  }, interval); // 控制输入速度，单位为毫秒
+}
+
+// 使用示例
+const phoneInput = document.getElementsByClassName("web-login-normal-input__input")[0];
+simulateTyping(phoneInput, '18217637991', 200); 
+
+
