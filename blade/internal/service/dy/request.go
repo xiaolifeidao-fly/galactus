@@ -5,6 +5,7 @@ import (
 	"galactus/blade/internal/service"
 	"galactus/blade/internal/service/device/dto"
 	"galactus/common/middleware/http"
+	"galactus/common/middleware/vipper"
 	"galactus/common/utils"
 	"math/rand"
 	"net/url"
@@ -12,7 +13,7 @@ import (
 	"time"
 )
 
-var singUrl = "http://localhost:9001"
+var singUrl = vipper.GetString("plugin.url")
 
 type DyEntity interface {
 	Init(Url string)

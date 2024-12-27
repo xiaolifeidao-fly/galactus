@@ -61,6 +61,27 @@ func Get(requestUrl string, cookie string, headers map[string]string) (map[strin
 
 }
 
+func GetToResponse(requestUrl string, cookie string, headers map[string]string) (*http.Response, error) {
+	// 发送GET请求
+	request, err := http.NewRequest("GET", requestUrl, nil)
+	if err != nil {
+		log.Fatalf("请求失败: %v", err)
+	}
+	if cookie != "" {
+		request.Header.Set("cookie", cookie)
+	}
+	if headers != nil {
+		for key, value := range headers {
+			request.Header.Set(key, value)
+		}
+	}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Fatalf("Error making POST request: %v", err)
+	}
+	return response, err
+}
+
 func PostForm(requestUrl string, requestBody map[string]interface{}, cookie string, headers map[string]string) (map[string]interface{}, error) {
 	// Encode the struct to JSON
 	formData := url.Values{}

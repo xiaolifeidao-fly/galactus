@@ -10,9 +10,17 @@ import (
 )
 
 func VideoRouters(engine *gin.RouterGroup) {
-	engine.GET("/dy/video/get", getVideoInfo)
 	engine.GET("/dy/video/player", playerVideo)
 	engine.GET("/dy/video/love", loveVideo)
+	engine.GET("/dy/video/convert", convertByVideoUrl)
+	engine.GET("/dy/video/get", getVideoInfo)
+
+}
+
+func convertByVideoUrl(context *gin.Context) {
+	businessKey := context.Query("businessKey")
+	response := dy.ConvertByVideoUrl(businessKey)
+	routers.ToJson(context, response, nil)
 }
 
 func getVideoInfo(context *gin.Context) {
@@ -22,8 +30,8 @@ func getVideoInfo(context *gin.Context) {
 		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO),
 		VideoId:      videoId,
 	}
-	result, err := dy.GetVideoInfo(videoInfo)
-	routers.ToJson(context, result, err)
+	result := dy.GetVideoItemInfo(videoInfo)
+	routers.ToJson(context, result, nil)
 }
 
 func playerVideo(context *gin.Context) {

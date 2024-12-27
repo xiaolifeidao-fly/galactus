@@ -1,5 +1,14 @@
 package dy
 
+import (
+	"fmt"
+	"galactus/blade/internal/service/dy/response"
+	dto "galactus/blade/internal/service/dy/response"
+	"galactus/common/middleware/http"
+	"strconv"
+	"strings"
+)
+
 type VideoInfo struct {
 	*DyBaseEntity
 	VideoId string
@@ -39,4 +48,76 @@ func LoveVideo(videoInfo *VideoInfo) (map[string]any, error) {
 	videoInfo.
 		AppendUrlParams("pc_libra_divert", "Mac")
 	return DoPost(videoInfo, params, "application/x-www-form-urlencoded; charset=UTF-8")
+}
+
+func GetVideoItemInfo(videoInfo *VideoInfo) *dto.ExtItemDTO {
+	extItem := &dto.ExtItemDTO{}
+	extItem.DataStatus = response.ERROR
+	videoResponse, err := GetVideoInfo(videoInfo)
+	if err != nil {
+		return extItem
+	}
+	statusCode := videoResponse["status_code"].(float64)
+	if statusCode != 0 {
+		return extItem
+	}
+	awemeDetail := videoResponse["aweme_detail"]
+	if awemeDetail == nil {
+		return extItem
+	}
+	awemeDetailMap := awemeDetail.(map[string]any)
+	statistics := awemeDetailMap["statistics"]
+	if statistics == nil {
+		return extItem
+	}
+	extItem.NowNum = int64(statistics.(map[string]any)["digg_count"].(float64))
+	extItem.BusinessId = videoInfo.VideoId
+	extItem.DataStatus = response.SUCCESS
+	desc := awemeDetailMap["desc"].(string)
+	extItem.Name = desc
+	extItem.Uid = fmt.Sprintf("%d", int64(awemeDetailMap["author_user_id"].(float64)))
+	return extItem
+}
+
+func ConvertByVideoUrl(businessKey string) *response.ConvertItemDTO {
+	convertItemDTO := &response.ConvertItemDTO{}
+	convertItemDTO.DataStatus = response.ERROR
+	if strings.HasPrefix(businessKey, "http") {
+		if strings.Contains(businessKey, "v.douyin.com") {
+			headers := map[string]string{
+				"Referer":    "https://www.douyin.com",
+				"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+			}
+			response, err := http.GetToResponse(businessKey, "", headers)
+			if err != nil {
+				return convertItemDTO
+			}
+			defer response.Body.Close()
+			businessKey = response.Request.URL.String()
+		}
+		if strings.Contains(businessKey, "www.douyin.com") {
+			start := strings.Index(businessKey, "video/")
+			end := strings.Index(businessKey, "?")
+			if start == -1 {
+				convertItemDTO.DataStatus = dto.DELETE
+				return convertItemDTO
+			}
+			if end == -1 {
+				end = len(businessKey)
+			}
+			businessKey = businessKey[start+6 : end]
+		}
+	}
+
+	_, err := strconv.ParseUint(businessKey, 10, 64)
+	if err != nil {
+		convertItemDTO.DataStatus = dto.DELETE
+		return convertItemDTO
+	}
+	convertItemDTO.ConvertValue = businessKey
+	convertItemDTO.Property = map[string]interface{}{
+		"url": "https://www.douyin.com/video/" + businessKey,
+	}
+	convertItemDTO.DataStatus = dto.SUCCESS
+	return convertItemDTO
 }

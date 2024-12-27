@@ -15,7 +15,6 @@ var Db *gorm.DB = GetDataBase()
 func GetDataBase() *gorm.DB {
 	sqlcon := vipper.GetString("sqlconn")
 	// 构建连接："用户名:密码@tcp(IP:端口)/数据库?charset=utf8"
-	log.Println("sql连接地址:", sqlcon)
 	// slowLogger := logger.New(
 	// 	//将标准输出作为Writer
 	// 	log.New(os.Stdout, "\r\n", log.LstdFlags),

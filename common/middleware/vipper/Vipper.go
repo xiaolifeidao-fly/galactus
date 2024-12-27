@@ -1,34 +1,31 @@
 package vipper
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/spf13/viper"
 )
 
-// Init 初始化配置文件
-// func init() {
-// 	Init()
-// }
-
-// func Init() {
-// 	viper.SetConfigName("application")
-// 	viper.SetConfigType("properties")
-// 	viper.AddConfigPath("../configs")
-// 	err := viper.ReadInConfig()
-// 	if err != nil {
-// 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
-// 	}
-// }
-
-func Setup(configPath string) error {
-
-	viper.SetConfigFile(configPath)
-	if err := viper.ReadInConfig(); err != nil {
-		return err
+func Init() {
+	// viper.SetConfigName("application")
+	// viper.SetConfigType("properties")
+	// viper.AddConfigPath("./configs")
+	viper.SetConfigFile("./configs/application.properties")
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
-	return nil
 }
+
+// func Setup(configPath string) error {
+
+// 	viper.SetConfigFile(configPath)
+// 	if err := viper.ReadInConfig(); err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
 
 func GetString(key string) string {
 	return viper.GetString(key)

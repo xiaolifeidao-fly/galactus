@@ -30,6 +30,14 @@ func ToJson(context *gin.Context, data interface{}, err error) {
 	})
 }
 
+func ToError(context *gin.Context, message string) {
+	context.JSON(http.StatusOK, gin.H{
+		"code":  FailCode,
+		"data":  message,
+		"error": nil,
+	})
+}
+
 type Option func(*gin.RouterGroup)
 
 type GinRouter struct {

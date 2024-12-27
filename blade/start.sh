@@ -1,1 +1,0 @@
-./blade server -c onfigs/application.properties
