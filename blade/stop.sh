@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # 设置应用的目录路径
-remote_path="/data/program/app/barry/bootstrap/barry-bootstrap-pro"
+remote_path="/data/program/app/galactus/blade"
 cluster_name="cluster1"
-app_name="barry-bootstrap-pro-0.0.1-SNAPSHOT.jar"
+app_name="blade"
 app_path="$remote_path/$cluster_name"
 
 # 步骤 1: 使用 lsof 查找进程，筛选出在特定目录下运行的进程，并只获取第一条
