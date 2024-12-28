@@ -9,6 +9,11 @@ var (
 	SUCCESS      = "SUCCESS"
 )
 
+var (
+	HS_UID_TYPE = "HS"
+	DY_UID_TYPE = "DY"
+)
+
 type BaseItem struct {
 	DataStatus string `json:"dataStatus"`
 }
@@ -27,4 +32,10 @@ type ExtItemDTO struct {
 	ExtParams  map[string]interface{} `json:"extParams"`
 	Property   map[string]interface{} `json:"property"`
 	Uid        string                 `json:"uid"`
+}
+
+type ConvertUrlItemDTO struct {
+	BaseItem
+	UidType string `json:"uidType"`
+	Uid     string `json:"uid"`
 }

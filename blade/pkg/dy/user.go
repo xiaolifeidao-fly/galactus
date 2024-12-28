@@ -15,7 +15,18 @@ func UserRouters(engine *gin.RouterGroup) {
 	engine.GET("/dy/user/get", getUserBySecUid)
 	engine.GET("/dy/user/favorites", getUserFavoriteBySecUid)
 	engine.GET("/dy/user/following", getUserFollowingBySecUid)
+	engine.GET("/dy/user/convertUidByUrl", convertUidByUrl)
 
+}
+
+func convertUidByUrl(context *gin.Context) {
+	url := context.Query("url")
+	webDeviceDTO, _ := webDeviceService.FindWebDeviceById(6)
+	userInfoEntity := &dy.UserInfoEntity{
+		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO),
+	}
+	result := dy.GetUrlByUrl(url, userInfoEntity)
+	routers.ToJson(context, result, nil)
 }
 
 func getUserBySecUid(context *gin.Context) {

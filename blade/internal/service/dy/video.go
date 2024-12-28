@@ -1,10 +1,10 @@
 package dy
 
 import (
-	"fmt"
 	"galactus/blade/internal/service/dy/response"
 	dto "galactus/blade/internal/service/dy/response"
 	"galactus/common/middleware/http"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -63,6 +63,21 @@ func GetVideoItemInfo(videoInfo *VideoInfo) *dto.ExtItemDTO {
 	}
 	awemeDetail := videoResponse["aweme_detail"]
 	if awemeDetail == nil {
+		filterDetail := videoResponse["filter_detail"]
+		if filterDetail != nil {
+			filterDetailMap := filterDetail.(map[string]any)
+			filterReason := filterDetailMap["filter_reason"].(string)
+			if strings.Contains(filterReason, "status_deleted") {
+				extItem.DataStatus = response.DELETE
+				log.Println("video delete ", " videoId ", videoInfo.VideoId)
+				return extItem
+			}
+			if strings.Contains(filterReason, "author_secret") {
+				extItem.DataStatus = response.SECRET
+				log.Println("video secret ", " videoId ", videoInfo.VideoId)
+				return extItem
+			}
+		}
 		return extItem
 	}
 	awemeDetailMap := awemeDetail.(map[string]any)
@@ -75,7 +90,16 @@ func GetVideoItemInfo(videoInfo *VideoInfo) *dto.ExtItemDTO {
 	extItem.DataStatus = response.SUCCESS
 	desc := awemeDetailMap["desc"].(string)
 	extItem.Name = desc
-	extItem.Uid = fmt.Sprintf("%d", int64(awemeDetailMap["author_user_id"].(float64)))
+	anchorInfo := awemeDetailMap["author"]
+	if anchorInfo != nil {
+		anchorInfoMap := anchorInfo.(map[string]any)
+		extItem.Uid = anchorInfoMap["uid"].(string)
+		extItem.ExtParams = map[string]interface{}{
+			"secUid":   anchorInfoMap["sec_uid"].(string),
+			"assistId": extItem.Uid,
+			"hsFlag":   false,
+		}
+	}
 	return extItem
 }
 

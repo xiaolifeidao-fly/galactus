@@ -1,5 +1,10 @@
 package dy
 
+import (
+	"galactus/blade/internal/service/dy/response"
+	"strings"
+)
+
 type UserInfoEntity struct {
 	*DyBaseEntity
 	SecUid string
@@ -63,4 +68,65 @@ func GetUserFollowingByWeb(userFollowEntity *UserFollowingEntity) (map[string]in
 		AppendUrlParams("gps_access", "0").
 		AppendUrlParams("address_book_access", "0")
 	return DoGet(userFollowEntity)
+}
+
+func getUid(uidType string, url string, userInfoEntity *UserInfoEntity) string {
+	if strings.EqualFold(response.DY_UID_TYPE, uidType) {
+		startIndex := strings.Index(url, "user/")
+		endIndex := len(url)
+		secUid := url[startIndex+5 : endIndex]
+		userInfoEntity.SecUid = secUid
+		userInfo, err := GetUserInfoByWeb(userInfoEntity)
+		if err != nil {
+			return ""
+		}
+		statusCode := userInfo["status_code"].(float64)
+		if statusCode != 0 {
+			return ""
+		}
+		user := userInfo["user"]
+		if user == nil {
+			return ""
+		}
+		userMap := user.(map[string]any)
+		uid := userMap["uid"].(string)
+		return uid
+	}
+
+	if strings.EqualFold(response.HS_UID_TYPE, uidType) {
+		startIndex := strings.Index(url, "?to_user_id=")
+		endIndex := strings.Index(url, "&")
+		if endIndex == -1 {
+			endIndex = len(url)
+		}
+		return url[startIndex+12 : endIndex]
+	}
+	return ""
+}
+
+func getUidType(url string) string {
+	if strings.Contains(url, "www.douyin.com/user/") {
+		return response.DY_UID_TYPE
+	}
+	if strings.Contains(url, "share.huoshan.com/pages/user/index.html/") {
+		return response.HS_UID_TYPE
+	}
+	return ""
+}
+
+func GetUrlByUrl(url string, userInfoEntity *UserInfoEntity) *response.ConvertUrlItemDTO {
+	convertUrlItemDTO := &response.ConvertUrlItemDTO{}
+	convertUrlItemDTO.DataStatus = response.ERROR
+	uidType := getUidType(url)
+	if uidType == "" {
+		return convertUrlItemDTO
+	}
+	convertUrlItemDTO.UidType = uidType
+	uid := getUid(uidType, url, userInfoEntity)
+	if uid == "" {
+		return convertUrlItemDTO
+	}
+	convertUrlItemDTO.Uid = uid
+	convertUrlItemDTO.DataStatus = response.SUCCESS
+	return convertUrlItemDTO
 }
