@@ -12,6 +12,9 @@ import (
 	"time"
 )
 
+// TODO go client 改造,支持代理IP模式，看看有没有办法不要每次new client
+// TODO 如果IP为空，则不使用代理IP
+
 var client *http.Client
 
 func init() {
@@ -23,6 +26,7 @@ func InitHttpClient() *http.Client {
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 10,
 		IdleConnTimeout:     90 * time.Second,
+		// Proxy:               http.ProxyURL(proxyUrl),
 	}
 
 	client := &http.Client{
@@ -30,7 +34,7 @@ func InitHttpClient() *http.Client {
 	}
 	return client
 }
-func Get(requestUrl string, cookie string, headers map[string]string) (map[string]interface{}, error) {
+func Get(requestUrl string, cookie string, headers map[string]string, ip string) (map[string]interface{}, error) {
 	// 发送GET请求
 	request, err := http.NewRequest("GET", requestUrl, nil)
 	if err != nil {
@@ -61,7 +65,7 @@ func Get(requestUrl string, cookie string, headers map[string]string) (map[strin
 
 }
 
-func GetToResponse(requestUrl string, cookie string, headers map[string]string) (*http.Response, error) {
+func GetToResponse(requestUrl string, cookie string, headers map[string]string, ip string) (*http.Response, error) {
 	// 发送GET请求
 	request, err := http.NewRequest("GET", requestUrl, nil)
 	if err != nil {
@@ -82,7 +86,7 @@ func GetToResponse(requestUrl string, cookie string, headers map[string]string) 
 	return response, err
 }
 
-func PostForm(requestUrl string, requestBody map[string]interface{}, cookie string, headers map[string]string) (map[string]interface{}, error) {
+func PostForm(requestUrl string, requestBody map[string]interface{}, cookie string, headers map[string]string, ip string) (map[string]interface{}, error) {
 	// Encode the struct to JSON
 	formData := url.Values{}
 	for key, value := range requestBody {
@@ -118,7 +122,7 @@ func PostForm(requestUrl string, requestBody map[string]interface{}, cookie stri
 	return result, err
 }
 
-func Post(requestUrl string, requestBody map[string]interface{}, cookie string, headers map[string]string) (map[string]interface{}, error) {
+func Post(requestUrl string, requestBody map[string]interface{}, cookie string, headers map[string]string, ip string) (map[string]interface{}, error) {
 	// Encode the struct to JSON
 	jsonData, _ := json.Marshal(requestBody)
 	request, err := http.NewRequest("POST", requestUrl, bytes.NewBuffer(jsonData))

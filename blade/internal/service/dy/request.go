@@ -24,6 +24,7 @@ type DyEntity interface {
 type DyBaseEntity struct {
 	service.Entity
 	WebDevice *dto.WebDeviceDTO
+	Ip        string
 	Url       string
 	Method    string
 	Body      map[string]interface{}
@@ -36,6 +37,10 @@ func (e *DyBaseEntity) GetCookie() map[string]interface{} {
 		"UIFID":     e.WebDevice.Uifid,
 		"sessionid": "10b74fa4aba90084a95dab3f617fc56f",
 	}
+}
+
+func (e *DyBaseEntity) GetIp() string {
+	return e.Ip
 }
 
 func (e *DyBaseEntity) Init(url string) {
@@ -164,7 +169,7 @@ func (e *DyBaseEntity) GetAbogus(params string, ua string) string {
 	result, _ := http.Post(singUrl+"/dy/abogus/sign", map[string]interface{}{
 		"params": params,
 		"ua":     ua,
-	}, "", nil)
+	}, "", nil, "")
 	return result["aBogus"].(string)
 }
 
@@ -173,7 +178,7 @@ func (e *DyBaseEntity) GetAcSign(Url string, acNonce string, ua string) string {
 		"Url":     Url,
 		"acNonce": acNonce,
 		"ua":      ua,
-	}, "", nil)
+	}, "", nil, "")
 	return result["acSignature"].(string)
 }
 
@@ -194,27 +199,27 @@ type DyRequest[E service.Entity] struct {
 	service.Request[E]
 }
 
-func (r *DyRequest[E]) DoGet(e E) (map[string]interface{}, error) {
+func (r *DyRequest[E]) DoGet(e E, ip string) (map[string]interface{}, error) {
 	e.Sign()
-	result, err := http.Get(e.GetUrl(), e.GetCookieString(), e.GetHeaders())
+	result, err := http.Get(e.GetUrl(), e.GetCookieString(), e.GetHeaders(), ip)
 	return result, err
 }
 
-func (r *DyRequest[E]) DoPost(e E, contentType string) (map[string]interface{}, error) {
+func (r *DyRequest[E]) DoPost(e E, contentType string, ip string) (map[string]interface{}, error) {
 	e.Sign()
 	if contentType != "" && contentType == "application/x-www-form-urlencoded; charset=UTF-8" {
-		return http.PostForm(e.GetUrl(), e.GetBody(), e.GetCookieString(), e.GetHeaders())
+		return http.PostForm(e.GetUrl(), e.GetBody(), e.GetCookieString(), e.GetHeaders(), ip)
 	}
-	return http.Post(e.GetUrl(), e.GetBody(), e.GetCookieString(), e.GetHeaders())
+	return http.Post(e.GetUrl(), e.GetBody(), e.GetCookieString(), e.GetHeaders(), ip)
 }
 
 func DoGet(e service.Entity) (map[string]interface{}, error) {
 	requestInstance := &DyRequest[service.Entity]{}
-	return requestInstance.DoGet(e)
+	return requestInstance.DoGet(e, e.GetIp())
 }
 
 func DoPost(e service.Entity, params map[string]interface{}, contentType string) (map[string]interface{}, error) {
 	e.SetBody(params)
 	requestInstance := &DyRequest[service.Entity]{}
-	return requestInstance.DoPost(e, contentType)
+	return requestInstance.DoPost(e, contentType, e.GetIp())
 }

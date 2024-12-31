@@ -103,7 +103,7 @@ func GetVideoItemInfo(videoInfo *VideoInfo) *dto.ExtItemDTO {
 	return extItem
 }
 
-func ConvertByVideoUrl(businessKey string) *response.ConvertItemDTO {
+func ConvertByVideoUrl(businessKey string, ip string) *response.ConvertItemDTO {
 	convertItemDTO := &response.ConvertItemDTO{}
 	convertItemDTO.DataStatus = response.ERROR
 	if strings.HasPrefix(businessKey, "http") {
@@ -112,7 +112,7 @@ func ConvertByVideoUrl(businessKey string) *response.ConvertItemDTO {
 				"Referer":    "https://www.douyin.com",
 				"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
 			}
-			response, err := http.GetToResponse(businessKey, "", headers)
+			response, err := http.GetToResponse(businessKey, "", headers, ip)
 			if err != nil {
 				return convertItemDTO
 			}

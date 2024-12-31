@@ -8,6 +8,7 @@ type Entity interface {
 	SetBody(params map[string]interface{})
 	GetMethod() string
 	Sign()
+	GetIp() string
 }
 
 type Request[R Entity] interface {

@@ -5,9 +5,10 @@ import (
 	"galactus/blade/internal/service/dy"
 )
 
-func NewDyBaseEntity(webDevice *dto.WebDeviceDTO) *dy.DyBaseEntity {
+func NewDyBaseEntity(webDevice *dto.WebDeviceDTO, ip string) *dy.DyBaseEntity {
 	dyBaseEntity := &dy.DyBaseEntity{
 		WebDevice: webDevice,
+		Ip:        ip,
 	}
 	return dyBaseEntity
 }

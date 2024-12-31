@@ -11,6 +11,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// TODO: 下面获取webDeviceDTO的逻辑要抽取出来一个模块，从里面获取一个设备，每次尽可能获取不一样的设备，轮询使用
+// TODO: web_device 表增加IP字段, 一个web_device 对应一个IP，这个IP失效的话，重新更新
+// TODO: 获取IP的逻辑要抽取出来一个模块，从里面获取一个IP，每次尽可能获取不一样的IP，轮询使用
+
 func UserRouters(engine *gin.RouterGroup) {
 	engine.GET("/dy/user/get", getUserBySecUid)
 	engine.GET("/dy/user/favorites", getUserFavoriteBySecUid)
@@ -22,8 +26,9 @@ func UserRouters(engine *gin.RouterGroup) {
 func convertUidByUrl(context *gin.Context) {
 	url := context.Query("url")
 	webDeviceDTO, _ := webDeviceService.FindWebDeviceById(6)
+	ip := "" //TODO 获取IP
 	userInfoEntity := &dy.UserInfoEntity{
-		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO),
+		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),
 	}
 	result := dy.GetUrlByUrl(url, userInfoEntity)
 	routers.ToJson(context, result, nil)
@@ -32,8 +37,9 @@ func convertUidByUrl(context *gin.Context) {
 func getUserBySecUid(context *gin.Context) {
 	secUid := context.Query("secUid")
 	webDeviceDTO, _ := webDeviceService.FindWebDeviceById(6)
+	ip := "" //TODO 获取IP
 	userInfo := &dy.UserInfoEntity{
-		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO),
+		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),
 		SecUid:       secUid,
 	}
 	result, err := dy.GetUserInfoByWeb(userInfo)
@@ -45,8 +51,9 @@ func getUserFavoriteBySecUid(context *gin.Context) {
 	maxCursor, _ := strconv.Atoi(context.Query("maxCursor"))
 	minCursor, _ := strconv.Atoi(context.Query("minCursor"))
 	webDeviceDTO, _ := webDeviceService.FindWebDeviceById(6)
+	ip := "" //TODO 获取IP
 	userFavoriteEntity := &dy.UserFavoriteEntity{
-		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO),
+		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),
 		SecUid:       secUid,
 		MaxCursor:    maxCursor,
 		MinCursor:    minCursor,
@@ -60,8 +67,9 @@ func getUserFollowingBySecUid(context *gin.Context) {
 	offset, _ := strconv.Atoi(context.Query("offset"))
 	userId := context.Query("userId")
 	webDeviceDTO, _ := webDeviceService.FindWebDeviceById(6)
+	ip := "" //TODO 获取IP
 	userFollowingEntity := &dy.UserFollowingEntity{
-		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO),
+		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),
 		SecUid:       secUid,
 		Offset:       offset,
 		UserId:       userId,
