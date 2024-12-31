@@ -5,6 +5,7 @@ import (
 	"galactus/blade/internal/service/dy/response"
 	dto "galactus/blade/internal/service/dy/response"
 	"galactus/common/middleware/http"
+	"galactus/common/utils"
 	"log"
 	"net/url"
 	"strconv"
@@ -129,7 +130,7 @@ func GetVideoItemInfo(videoInfo *VideoInfo) *dto.ExtItemDTO {
 	extItem.BusinessId = videoInfo.VideoId
 	extItem.DataStatus = response.SUCCESS
 	desc := awemeDetailMap["desc"].(string)
-	extItem.Name = desc
+	extItem.Name = utils.RemoveEmojis(desc)
 	anchorInfo := awemeDetailMap["author"]
 	shareUrl := awemeDetailMap["share_url"]
 	if anchorInfo != nil {
@@ -149,6 +150,7 @@ func GetVideoItemInfo(videoInfo *VideoInfo) *dto.ExtItemDTO {
 func ConvertByVideoUrl(businessKey string, ip string) *response.ConvertItemDTO {
 	convertItemDTO := &response.ConvertItemDTO{}
 	convertItemDTO.DataStatus = response.ERROR
+	typeValue := "video/"
 	if strings.HasPrefix(businessKey, "http") {
 		if strings.Contains(businessKey, "v.douyin.com") {
 			headers := map[string]string{
@@ -163,7 +165,7 @@ func ConvertByVideoUrl(businessKey string, ip string) *response.ConvertItemDTO {
 			businessKey = response.Request.URL.String()
 		}
 		if strings.Contains(businessKey, "www.douyin.com") {
-			start := strings.Index(businessKey, "video/")
+			start := strings.Index(businessKey, typeValue)
 			end := strings.Index(businessKey, "?")
 			if start == -1 {
 				convertItemDTO.DataStatus = dto.DELETE
@@ -172,10 +174,9 @@ func ConvertByVideoUrl(businessKey string, ip string) *response.ConvertItemDTO {
 			if end == -1 {
 				end = len(businessKey)
 			}
-			businessKey = businessKey[start+6 : end]
+			businessKey = businessKey[start+len(typeValue) : end]
 		}
 	}
-
 	_, err := strconv.ParseUint(businessKey, 10, 64)
 	if err != nil {
 		convertItemDTO.DataStatus = dto.DELETE
@@ -183,7 +184,7 @@ func ConvertByVideoUrl(businessKey string, ip string) *response.ConvertItemDTO {
 	}
 	convertItemDTO.ConvertValue = businessKey
 	convertItemDTO.Property = map[string]interface{}{
-		"url": "https://www.douyin.com/video/" + businessKey,
+		"url": "https://www.douyin.com/" + typeValue + businessKey,
 	}
 	convertItemDTO.DataStatus = dto.SUCCESS
 	return convertItemDTO
