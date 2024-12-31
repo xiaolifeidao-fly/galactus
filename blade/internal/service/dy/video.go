@@ -1,17 +1,57 @@
 package dy
 
 import (
+	"fmt"
 	"galactus/blade/internal/service/dy/response"
 	dto "galactus/blade/internal/service/dy/response"
 	"galactus/common/middleware/http"
 	"log"
+	"net/url"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type VideoInfo struct {
 	*DyBaseEntity
 	VideoId string
+}
+
+func GetVideoShorUrl(shareUrl string, videoInfo *VideoInfo) (map[string]any, error) {
+	requestUrl := "https://www.douyin.com/aweme/v1/web/web_shorten/?"
+	ts := time.Now().Unix()
+	parsedURL, err := url.Parse(shareUrl)
+	if err != nil {
+		fmt.Println("Error parsing URL:", err)
+		return nil, err
+	}
+	// 获取查询参数
+	queryParams := parsedURL.Query()
+	// 修改查询参数 (替换 'query' 参数的值)
+	queryParams.Set("ts", strconv.FormatInt(ts, 10))
+	// 将修改后的查询参数重新赋值给 URL
+	parsedURL.RawQuery = queryParams.Encode()
+	shareUrl = parsedURL.String()
+	videoInfo.Init(requestUrl)
+	videoInfo.
+		AppendUrlParams("target", url.QueryEscape(shareUrl)).
+		AppendUrlParams("belong", "aweme").
+		AppendUrlParams("persist", "1").
+		AppendUrlParams("pc_libra_divert", "Mac")
+	return DoGet(videoInfo)
+}
+
+func getVideoShortUrlStr(shortUrl string, videoInfo *VideoInfo) string {
+	shortUrlResponse, err := GetVideoShorUrl(shortUrl, videoInfo)
+	if err != nil {
+		return ""
+	}
+	code := shortUrlResponse["code"].(float64)
+	if code != 0 {
+		return ""
+	}
+	shortUrl = shortUrlResponse["data"].(string)
+	return shortUrl
 }
 
 func GetVideoInfo(videoInfo *VideoInfo) (map[string]any, error) {
@@ -91,12 +131,15 @@ func GetVideoItemInfo(videoInfo *VideoInfo) *dto.ExtItemDTO {
 	desc := awemeDetailMap["desc"].(string)
 	extItem.Name = desc
 	anchorInfo := awemeDetailMap["author"]
+	shareUrl := awemeDetailMap["share_url"]
 	if anchorInfo != nil {
 		anchorInfoMap := anchorInfo.(map[string]any)
 		extItem.Uid = anchorInfoMap["uid"].(string)
 		extItem.ExtParams = map[string]interface{}{
 			"secUid":   anchorInfoMap["sec_uid"].(string),
 			"assistId": extItem.Uid,
+			"shortUrl": getVideoShortUrlStr(shareUrl.(string), videoInfo),
+			"shareUrl": shareUrl,
 			"hsFlag":   false,
 		}
 	}
