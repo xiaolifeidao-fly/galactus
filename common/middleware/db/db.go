@@ -10,7 +10,11 @@ import (
 )
 
 // Db 定义数据库全局变量
-var Db *gorm.DB = GetDataBase()
+var Db *gorm.DB
+
+func InitDB() {
+	Db = GetDataBase()
+}
 
 func GetDataBase() *gorm.DB {
 	sqlcon := vipper.GetString("sqlconn")
