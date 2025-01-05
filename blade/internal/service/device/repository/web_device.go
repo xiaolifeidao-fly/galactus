@@ -39,6 +39,7 @@ type WebDevice struct {
 	Ttwid             string `orm:"column(ttwid);size(500);null" description:"TTWID"`
 	OdinTt            string `orm:"column(odin_tt);size(500);null" description:"ODINTT"`
 	UserAgent         string `orm:"column(user_agent);size(500);null" description:"UserAgent"`
+	ProxyIp           string `orm:"column(proxy_ip);size(255);null" description:"代理IP地址"`
 }
 
 func (w *WebDevice) TableName() string {

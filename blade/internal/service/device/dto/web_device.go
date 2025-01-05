@@ -39,4 +39,5 @@ type WebDeviceDTO struct {
 	Ttwid             string `json:"ttwid" description:"TTWID"`
 	OdinTt            string `json:"odinTt" description:"ODINTT"`
 	UserAgent         string `json:"userAgent" description:"ODINTT"`
+	ProxyIp           string `json:"proxyIp" description:"代理IP地址"`
 }
