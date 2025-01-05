@@ -25,7 +25,7 @@ func UserRouters(engine *gin.RouterGroup) {
 
 func convertUidByUrl(context *gin.Context) {
 	url := context.Query("url")
-	webDeviceDTO, _ := webDeviceService.FindWebDeviceById(6)
+	webDeviceDTO, _ := webDeviceService.NewWebDeviceService().GetById(6)
 	ip := "" //TODO 获取IP
 	userInfoEntity := &dy.UserInfoEntity{
 		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),
@@ -36,7 +36,7 @@ func convertUidByUrl(context *gin.Context) {
 
 func getUserBySecUid(context *gin.Context) {
 	secUid := context.Query("secUid")
-	webDeviceDTO, _ := webDeviceService.FindWebDeviceById(6)
+	webDeviceDTO, _ := webDeviceService.NewWebDeviceService().GetById(6)
 	ip := "" //TODO 获取IP
 	userInfo := &dy.UserInfoEntity{
 		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),
@@ -50,7 +50,7 @@ func getUserFavoriteBySecUid(context *gin.Context) {
 	secUid := context.Query("secUid")
 	maxCursor, _ := strconv.Atoi(context.Query("maxCursor"))
 	minCursor, _ := strconv.Atoi(context.Query("minCursor"))
-	webDeviceDTO, _ := webDeviceService.FindWebDeviceById(6)
+	webDeviceDTO, _ := webDeviceService.NewWebDeviceService().GetById(6)
 	ip := "" //TODO 获取IP
 	userFavoriteEntity := &dy.UserFavoriteEntity{
 		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),
@@ -66,7 +66,7 @@ func getUserFollowingBySecUid(context *gin.Context) {
 	secUid := context.Query("secUid")
 	offset, _ := strconv.Atoi(context.Query("offset"))
 	userId := context.Query("userId")
-	webDeviceDTO, _ := webDeviceService.FindWebDeviceById(6)
+	webDeviceDTO, _ := webDeviceService.NewWebDeviceService().GetById(6)
 	ip := "" //TODO 获取IP
 	userFollowingEntity := &dy.UserFollowingEntity{
 		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),

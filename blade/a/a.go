@@ -2,6 +2,7 @@ package a
 
 import (
 	"galactus/blade/internal/service/ip"
+	"galactus/blade/internal/service/ip/biz"
 	"galactus/common/middleware/db"
 	"galactus/common/middleware/redis"
 	"galactus/common/middleware/vipper"
@@ -13,8 +14,7 @@ func init() {
 }
 
 func Init() {
-
-	// 再初始化数据库
+	// db init
 	db.InitDB()
 
 	// redis init
@@ -22,15 +22,16 @@ func Init() {
 	redisPwd := vipper.GetString("redis.password")
 	redis.InitRedisClient(redisAddr, redisPwd)
 
-	// ip service init
-	_, err := ip.InitDefaultIpService()
-	if err != nil {
-		log.Printf("ip init failed: %v", err)
-	}
-
 	// zdy http proxy service init
 	zdyUrl := vipper.GetString("zdy.url")
 	zdyKey := vipper.GetString("zdy.key")
 	zdyApi := vipper.GetString("zdy.api")
 	ip.InitDefaultZDYHttpProxyService(zdyUrl, zdyKey, zdyApi)
+
+	// ip service init
+	biz.InitDefaultIpManager()
+	err := biz.GetDefaultIpManager().InitIp()
+	if err != nil {
+		log.Printf("ip init failed: %v", err)
+	}
 }

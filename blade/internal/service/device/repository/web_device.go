@@ -4,6 +4,7 @@ import (
 	"galactus/common/middleware/db"
 )
 
+// WebDevice Web设备实体
 type WebDevice struct {
 	db.BaseEntity
 	DevicePlatform    string `orm:"column(device_platform);size(32);null" description:"设备平台"`
@@ -42,7 +43,7 @@ type WebDevice struct {
 	ProxyIp           string `orm:"column(proxy_ip);size(255);null" description:"代理IP地址"`
 }
 
-func (w *WebDevice) TableName() string {
+func (d *WebDevice) TableName() string {
 	return "web_device"
 }
 
@@ -50,7 +51,31 @@ type WebDeviceRepository struct {
 	db.Repository[*WebDevice]
 }
 
-func (w *WebDeviceRepository) GetByWebid(webid string) (*WebDevice, error) {
-	device, err := w.GetOne("select * from web_device where webid = ?", webid)
+func (r *WebDeviceRepository) SaveOrUpdate(device *WebDevice) (*WebDevice, error) {
+	err := r.Db.Save(device).Error
 	return device, err
+}
+
+func (r *WebDeviceRepository) FindAll() ([]*WebDevice, error) {
+	return r.GetList("select * from web_device where active = 1")
+}
+
+func (r *WebDeviceRepository) GetByWebid(webid string) (*WebDevice, error) {
+	return r.GetOne("select * from web_device where webid = ? and active = 1", webid)
+}
+
+func (r *WebDeviceRepository) GetActiveByRangeId(startIndex, endIndex int64) ([]*WebDevice, error) {
+	return r.GetList("select * from web_device where id >= ? and id < ? and active = ?", startIndex, endIndex, true)
+}
+
+func (r *WebDeviceRepository) MinIdByStartIndex(startIndex int64) (int64, error) {
+	device, err := r.GetOne("select * from web_device where id > ? order by id asc limit 1", startIndex)
+	if err != nil {
+		return 0, err
+	}
+	return int64(device.Id), nil
+}
+
+func (r *WebDeviceRepository) GetByUdIdAndOpenUdIdAndSerial(udId, openUdId, serial string) (*WebDevice, error) {
+	return r.GetOne("select * from web_device where ud_id = ? and open_ud_id = ? and serial = ? and active = 1", udId, openUdId, serial)
 }
