@@ -4,36 +4,43 @@ import (
 	"errors"
 	"galactus/blade/internal/service/ip"
 	"galactus/blade/internal/service/ip/dto"
+	"log"
 	"math/rand"
 	"sync"
 	"time"
 )
 
 var (
-	ipInstance *IpService
-	ipOnce     sync.Once
+	defaultIpInstance *IpManager
+	ipManagerOnce     sync.Once
 )
 
-type IpService struct {
+type IpManager struct {
 	ipEntities  []*dto.ProxyIpDTO
 	ipNum       int
 	mu          sync.Mutex
 	baseService *ip.IpService
 }
 
-func GetDefaultIpService() *IpService {
-	ipOnce.Do(func() {
-		ipInstance = &IpService{
+func InitDefaultIpManager() {
+	ipManagerOnce.Do(func() {
+		defaultIpInstance = &IpManager{
 			baseService: ip.NewIpService(),
 		}
-		if err := ipInstance.InitIp(); err != nil {
-			panic("Failed to initialize IpService: " + err.Error())
+		if err := defaultIpInstance.InitIp(); err != nil {
+			log.Printf("Failed to initialize IpManager: %v", err)
 		}
 	})
-	return ipInstance
 }
 
-func (s *IpService) InitIp() error {
+func GetDefaultIpManager() *IpManager {
+	if defaultIpInstance == nil {
+		panic("IpManager is not initialized. Call InitDefaultIpManager first.")
+	}
+	return defaultIpInstance
+}
+
+func (s *IpManager) InitIp() error {
 	proxyIps, err := s.baseService.GetProxyIpsByType("FINISH_QUERY")
 	if err != nil || len(proxyIps) == 0 {
 		return errors.New("not found ip config")
@@ -44,7 +51,7 @@ func (s *IpService) InitIp() error {
 	return nil
 }
 
-func (s *IpService) GetIp() (*dto.ProxyIpDTO, error) {
+func (s *IpManager) GetIp() (*dto.ProxyIpDTO, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -55,7 +62,7 @@ func (s *IpService) GetIp() (*dto.ProxyIpDTO, error) {
 	return ipDTO, nil
 }
 
-func (s *IpService) getIpDTO() (*dto.ProxyIpDTO, error) {
+func (s *IpManager) getIpDTO() (*dto.ProxyIpDTO, error) {
 	randomIndex := s.getRandomIndex()
 	if randomIndex == -1 {
 		return nil, errors.New("no available IP")
@@ -74,18 +81,19 @@ func (s *IpService) getIpDTO() (*dto.ProxyIpDTO, error) {
 	return ipDTO, nil
 }
 
-func (s *IpService) updateIp(ipDTO *dto.ProxyIpDTO, newIp map[string]interface{}) {
+func (s *IpManager) updateIp(ipDTO *dto.ProxyIpDTO, newIp map[string]interface{}) {
 	ipDTO.Ip = newIp["ip"].(string) + ":" + newIp["port"].(string)
 	ipDTO.ExpireTime = newIp["expireTime"].(time.Time)
 	// Save updated IP back to the repository
 	_, err := s.baseService.SaveOrUpdateProxyIp(ipDTO)
 	if err != nil {
 		// 这里可以添加日志记录
+		log.Printf("update ip failed: %v", err)
 		return
 	}
 }
 
-func (s *IpService) getRandomIndex() int {
+func (s *IpManager) getRandomIndex() int {
 	ipSize := len(s.ipEntities)
 	if ipSize == 0 {
 		return -1

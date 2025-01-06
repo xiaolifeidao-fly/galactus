@@ -2,8 +2,9 @@ package redis
 
 import (
 	"fmt"
-	"github.com/go-redis/redis"
 	"time"
+
+	"github.com/go-redis/redis"
 )
 
 //// Rdb 声明一个全局的rdb变量
@@ -99,4 +100,32 @@ func ZRem(key string, member ...interface{}) int64 {
 		fmt.Printf("redis-zscore failed, err:%v\n", err)
 	}
 	return val
+}
+
+// Incr 递增
+func Incr(key string) int64 {
+	val, err := Rdb.Incr(key).Result()
+	if err != nil {
+		fmt.Printf("redis-incr failed, err:%v\n", err)
+	}
+	return val
+}
+
+// TTL 获取过期时间
+func TTL(key string) time.Duration {
+	val, err := Rdb.TTL(key).Result()
+	if err != nil {
+		fmt.Printf("redis-ttl failed, err:%v\n", err)
+	}
+	return val
+}
+
+// Exists 检查key是否存在
+func Exists(key string) bool {
+	val, err := Rdb.Exists(key).Result()
+	if err != nil {
+		fmt.Printf("redis-exists failed, err:%v\n", err)
+		return false
+	}
+	return val > 0
 }

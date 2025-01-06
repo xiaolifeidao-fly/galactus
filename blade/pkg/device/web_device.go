@@ -20,11 +20,11 @@ func save(context *gin.Context) {
 	var device dto.WebDeviceDTO
 	context.ShouldBindJSON(&device)
 	deviceDTO := converter.ToDTO[dto.WebDeviceDTO](&device)
-	_, err := deviceService.SaveWebDevice(deviceDTO)
+	_, err := deviceService.NewWebDeviceService().Save(deviceDTO)
 	routers.ToJson(context, "保存成功", err)
 }
 
 func list(context *gin.Context) {
-	devices, err := deviceService.GetWebDeviceList()
+	devices, err := deviceService.NewWebDeviceService().GetWebDeviceList()
 	routers.ToJson(context, devices, err)
 }

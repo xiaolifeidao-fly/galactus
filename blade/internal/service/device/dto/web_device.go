@@ -6,38 +6,38 @@ import (
 
 type WebDeviceDTO struct {
 	dto.BaseDTO
-	DevicePlatform    string `json:"devicePlatform" description:"设备平台"`
-	Aid               string `json:"aid" description:"应用ID"`
-	Channel           string `json:"channel" description:"渠道"`
-	Source            string `json:"source" description:"来源"`
-	UpdateVersionCode string `json:"updateVersionCode" description:"更新版本代码"`
-	PcClientType      string `json:"pcClientType" description:"PC客户端类型"`
-	VersionCode       string `json:"versionCode" description:"版本代码"`
-	VersionName       string `json:"versionName" description:"版本名称"`
-	CookieEnabled     string `json:"cookieEnabled" description:"Cookie是否启用"`
-	ScreenWidth       string `json:"screenWidth" description:"屏幕宽度"`
-	ScreenHeight      string `json:"screenHeight" description:"屏幕高度"`
-	BrowserLanguage   string `json:"browserLanguage" description:"浏览器语言"`
-	BrowserPlatform   string `json:"browserPlatform" description:"浏览器平台"`
-	BrowserName       string `json:"browserName" description:"浏览器名称"`
-	BrowserVersion    string `json:"browserVersion" description:"浏览器版本"`
-	BrowserOnline     string `json:"browserOnline" description:"浏览器是否在线"`
-	EngineName        string `json:"engineName" description:"引擎名称"`
-	EngineVersion     string `json:"engineVersion" description:"引擎版本"`
-	OsName            string `json:"osName" description:"操作系统名称"`
-	OsVersion         string `json:"osVersion" description:"操作系统版本"`
-	CpuCoreNum        string `json:"cpuCoreNum" description:"CPU核心数"`
-	DeviceMemory      string `json:"deviceMemory" description:"设备内存"`
-	Platform          string `json:"platform" description:"平台"`
-	Downlink          string `json:"downlink" description:"下载速度"`
-	EffectiveType     string `json:"effectiveType" description:"有效类型"`
-	RoundTripTime     string `json:"roundTripTime" description:"往返时间"`
-	Webid             string `json:"webid" description:"WebID"`
-	Uifid             string `json:"uifid" description:"UIFID"`
-	VerifyFp          string `json:"verifyFp" description:"验证FP"`
-	Fp                string `json:"fp" description:"FP"`
-	Ttwid             string `json:"ttwid" description:"TTWID"`
-	OdinTt            string `json:"odinTt" description:"ODINTT"`
-	UserAgent         string `json:"userAgent" description:"ODINTT"`
-	ProxyIp           string `json:"proxyIp" description:"代理IP地址"`
+	DevicePlatform    string `json:"device_platform"`
+	Aid               string `json:"aid"`
+	Channel           string `json:"channel"`
+	Source            string `json:"source"`
+	UpdateVersionCode string `json:"update_version_code"`
+	PcClientType      string `json:"pc_client_type"`
+	VersionCode       string `json:"version_code"`
+	VersionName       string `json:"version_name"`
+	CookieEnabled     string `json:"cookie_enabled"`
+	ScreenWidth       string `json:"screen_width"`
+	ScreenHeight      string `json:"screen_height"`
+	BrowserLanguage   string `json:"browser_language"`
+	BrowserPlatform   string `json:"browser_platform"`
+	BrowserName       string `json:"browser_name"`
+	BrowserVersion    string `json:"browser_version"`
+	BrowserOnline     string `json:"browser_online"`
+	EngineName        string `json:"engine_name"`
+	EngineVersion     string `json:"engine_version"`
+	OsName            string `json:"os_name"`
+	OsVersion         string `json:"os_version"`
+	CpuCoreNum        string `json:"cpu_core_num"`
+	DeviceMemory      string `json:"device_memory"`
+	Platform          string `json:"platform"`
+	Downlink          string `json:"downlink"`
+	EffectiveType     string `json:"effective_type"`
+	RoundTripTime     string `json:"round_trip_time"`
+	Webid             string `json:"webid"`
+	Uifid             string `json:"uifid"`
+	VerifyFp          string `json:"verify_fp"`
+	Fp                string `json:"fp"`
+	Ttwid             string `json:"ttwid"`
+	OdinTt            string `json:"odin_tt"`
+	UserAgent         string `json:"user_agent"`
+	ProxyIp           string `json:"proxy_ip"`
 }
