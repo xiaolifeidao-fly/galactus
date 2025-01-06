@@ -57,7 +57,7 @@ func (m *WebDeviceManager) InitWebDevicePool(ctx context.Context) error {
 	}
 
 	// 获取设备列表
-	devices, err := m.webDeviceSvc.GetActiveByRangeId(ctx, currentIndex, currentIndex+webDevicePageSize)
+	devices, err := m.webDeviceSvc.GetActiveByRangeId(currentIndex, currentIndex+webDevicePageSize)
 	if err != nil {
 		return fmt.Errorf("get web devices error: %v", err)
 	}
@@ -150,19 +150,19 @@ func (m *WebDeviceManager) getNewWebDevice(ctx context.Context) (*dto.WebDeviceD
 	}
 
 	// 获取新的设备列表
-	devices, err := m.webDeviceSvc.GetActiveByRangeId(ctx, currentIndex, currentIndex+webDevicePageSize)
+	devices, err := m.webDeviceSvc.GetActiveByRangeId(currentIndex, currentIndex+webDevicePageSize)
 	if err != nil {
 		return nil, fmt.Errorf("get web devices error: %v", err)
 	}
 
 	if len(devices) == 0 {
 		// 如果没有新设备，重置索引
-		minId, err := m.webDeviceSvc.MinIdByStartIndex(ctx, currentIndex)
+		minId, err := m.webDeviceSvc.MinIdByStartIndex(currentIndex)
 		if err != nil {
 			return nil, fmt.Errorf("get min id error: %v", err)
 		}
 
-		devices, err = m.webDeviceSvc.GetActiveByRangeId(ctx, minId, minId+webDevicePageSize)
+		devices, err = m.webDeviceSvc.GetActiveByRangeId(minId, minId+webDevicePageSize)
 		if err != nil {
 			return nil, fmt.Errorf("get web devices error: %v", err)
 		}
