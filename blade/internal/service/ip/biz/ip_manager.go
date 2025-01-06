@@ -15,17 +15,24 @@ var (
 	ipManagerOnce     sync.Once
 )
 
+// IpObserver 定义IP更新的观察者接口
+type IpObserver interface {
+	OnIpUpdate(oldIp, newIp string)
+}
+
 type IpManager struct {
 	ipEntities  []*dto.ProxyIpDTO
 	ipNum       int
 	mu          sync.Mutex
 	baseService *ip.IpService
+	observers   []IpObserver
 }
 
 func InitDefaultIpManager() {
 	ipManagerOnce.Do(func() {
 		defaultIpInstance = &IpManager{
 			baseService: ip.NewIpService(),
+			observers:   make([]IpObserver, 0),
 		}
 		if err := defaultIpInstance.InitIp(); err != nil {
 			log.Printf("Failed to initialize IpManager: %v", err)
@@ -81,16 +88,33 @@ func (s *IpManager) getIpDTO() (*dto.ProxyIpDTO, error) {
 	return ipDTO, nil
 }
 
+// RegisterObserver 注册观察者
+func (s *IpManager) RegisterObserver(observer IpObserver) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.observers = append(s.observers, observer)
+}
+
+// notifyObservers 通知所有观察者
+func (s *IpManager) notifyObservers(oldIp, newIp string) {
+	for _, observer := range s.observers {
+		go observer.OnIpUpdate(oldIp, newIp)
+	}
+}
+
 func (s *IpManager) updateIp(ipDTO *dto.ProxyIpDTO, newIp map[string]interface{}) {
+	oldIp := ipDTO.Ip
 	ipDTO.Ip = newIp["ip"].(string) + ":" + newIp["port"].(string)
 	ipDTO.ExpireTime = newIp["expireTime"].(time.Time)
 	// Save updated IP back to the repository
 	_, err := s.baseService.SaveOrUpdateProxyIp(ipDTO)
 	if err != nil {
-		// 这里可以添加日志记录
 		log.Printf("update ip failed: %v", err)
 		return
 	}
+
+	// 通知观察者IP已更新
+	s.notifyObservers(oldIp, ipDTO.Ip)
 }
 
 func (s *IpManager) getRandomIndex() int {

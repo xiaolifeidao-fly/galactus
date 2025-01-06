@@ -10,6 +10,7 @@ import (
 	"galactus/blade/internal/service/device"
 	"galactus/blade/internal/service/device/dto"
 	"galactus/blade/internal/service/dictionary"
+	"galactus/blade/internal/service/ip/biz"
 	"galactus/common/middleware/redis"
 )
 
@@ -25,17 +26,41 @@ type WebDeviceManager struct {
 	webDeviceSvc       *device.WebDeviceService
 	dictionarySvc      dictionary.DictionaryService
 	webDeviceExpireKey string
+	ipManager          *biz.IpManager
+	deviceIpMap        map[string][]*dto.WebDeviceDTO // key: ip, value: devices using this ip
 }
 
 func NewWebDeviceManager(
 	webDeviceSvc *device.WebDeviceService,
 	dictionarySvc dictionary.DictionaryService,
 ) *WebDeviceManager {
-	return &WebDeviceManager{
+	manager := &WebDeviceManager{
 		webDevicePool:      make(chan *dto.WebDeviceDTO, webDevicePageSize),
 		webDeviceSvc:       webDeviceSvc,
 		dictionarySvc:      dictionarySvc,
 		webDeviceExpireKey: "WEB_DEVICE_EXPIRE",
+		ipManager:          biz.GetDefaultIpManager(),
+		deviceIpMap:        make(map[string][]*dto.WebDeviceDTO),
+	}
+	// 注册为IP更新的观察者
+	manager.ipManager.RegisterObserver(manager)
+	return manager
+}
+
+// OnIpUpdate 实现IP更新的观察者接口
+func (m *WebDeviceManager) OnIpUpdate(oldIp, newIp string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// 查找使用旧IP的设备
+	if devices, ok := m.deviceIpMap[oldIp]; ok {
+		// 更新这些设备的IP
+		for _, dev := range devices {
+			dev.ProxyIp = newIp
+		}
+		// 更新映射关系
+		delete(m.deviceIpMap, oldIp)
+		m.deviceIpMap[newIp] = devices
 	}
 }
 
@@ -57,7 +82,7 @@ func (m *WebDeviceManager) InitWebDevicePool(ctx context.Context) error {
 	}
 
 	// 获取设备列表
-	devices, err := m.webDeviceSvc.GetActiveByRangeId(ctx, currentIndex, currentIndex+webDevicePageSize)
+	devices, err := m.webDeviceSvc.GetActiveByRangeId(currentIndex, currentIndex+webDevicePageSize)
 	if err != nil {
 		return fmt.Errorf("get web devices error: %v", err)
 	}
@@ -117,6 +142,17 @@ func (m *WebDeviceManager) fillWebDeviceDefaultValues(dev *dto.WebDeviceDTO) {
 	if dev.UserAgent == "" {
 		dev.UserAgent = ""
 	}
+
+	// 设置IP
+	if dev.ProxyIp == "" {
+		if ipDTO, err := m.ipManager.GetIp(); err == nil {
+			dev.ProxyIp = ipDTO.Ip
+			// 记录IP和设备的关系
+			m.mu.Lock()
+			m.deviceIpMap[ipDTO.Ip] = append(m.deviceIpMap[ipDTO.Ip], dev)
+			m.mu.Unlock()
+		}
+	}
 }
 
 // checkWebDeviceAvailable 检查设备是否可用
@@ -150,19 +186,19 @@ func (m *WebDeviceManager) getNewWebDevice(ctx context.Context) (*dto.WebDeviceD
 	}
 
 	// 获取新的设备列表
-	devices, err := m.webDeviceSvc.GetActiveByRangeId(ctx, currentIndex, currentIndex+webDevicePageSize)
+	devices, err := m.webDeviceSvc.GetActiveByRangeId(currentIndex, currentIndex+webDevicePageSize)
 	if err != nil {
 		return nil, fmt.Errorf("get web devices error: %v", err)
 	}
 
 	if len(devices) == 0 {
 		// 如果没有新设备，重置索引
-		minId, err := m.webDeviceSvc.MinIdByStartIndex(ctx, currentIndex)
+		minId, err := m.webDeviceSvc.MinIdByStartIndex(currentIndex)
 		if err != nil {
 			return nil, fmt.Errorf("get min id error: %v", err)
 		}
 
-		devices, err = m.webDeviceSvc.GetActiveByRangeId(ctx, minId, minId+webDevicePageSize)
+		devices, err = m.webDeviceSvc.GetActiveByRangeId(minId, minId+webDevicePageSize)
 		if err != nil {
 			return nil, fmt.Errorf("get web devices error: %v", err)
 		}
