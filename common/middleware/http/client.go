@@ -15,12 +15,14 @@ import (
 // TODO go client 改造,支持代理IP模式，看看有没有办法不要每次new client
 // TODO 如果IP为空，则不使用代理IP
 
-func InitHttpClient() *http.Client {
+func InitHttpClient(ip string) *http.Client {
 	var transport = &http.Transport{
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 10,
 		IdleConnTimeout:     90 * time.Second,
-		Proxy:               http.ProxyURL(&url.URL{Host: "127.0.0.1:8888"}),
+	}
+	if ip != "" {
+		transport.Proxy = http.ProxyURL(&url.URL{Host: ip})
 	}
 
 	client := &http.Client{
@@ -42,7 +44,7 @@ func Get(requestUrl string, cookie string, headers map[string]string, ip string)
 			request.Header.Set(key, value)
 		}
 	}
-	response, err := InitHttpClient().Do(request)
+	response, err := InitHttpClient(ip).Do(request)
 	if err != nil {
 		log.Fatalf("Error making POST request: %v", err)
 	}
@@ -73,7 +75,7 @@ func GetToResponse(requestUrl string, cookie string, headers map[string]string, 
 			request.Header.Set(key, value)
 		}
 	}
-	response, err := InitHttpClient().Do(request)
+	response, err := InitHttpClient(ip).Do(request)
 	if err != nil {
 		log.Fatalf("Error making POST request: %v", err)
 	}
@@ -100,7 +102,7 @@ func PostForm(requestUrl string, requestBody map[string]interface{}, cookie stri
 			request.Header.Set(key, value)
 		}
 	}
-	response, err := InitHttpClient().Do(request)
+	response, err := InitHttpClient(ip).Do(request)
 	if err != nil {
 		log.Fatalf("Error making POST request: %v", err)
 	}
@@ -133,7 +135,7 @@ func Post(requestUrl string, requestBody map[string]interface{}, cookie string, 
 			request.Header.Set(key, value)
 		}
 	}
-	response, err := InitHttpClient().Do(request)
+	response, err := InitHttpClient(ip).Do(request)
 	if err != nil {
 		log.Fatalf("Error making POST request: %v", err)
 	}
