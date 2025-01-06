@@ -5,15 +5,14 @@ import (
 	"galactus/blade/internal/service"
 	"galactus/blade/internal/service/device/dto"
 	"galactus/common/middleware/http"
-	"galactus/common/middleware/vipper"
 	"galactus/common/utils"
 	"math/rand"
 	"net/url"
 	"strings"
 	"time"
-)
 
-var singUrl = vipper.GetString("plugin.url")
+	"github.com/spf13/viper"
+)
 
 type DyEntity interface {
 	Init(Url string)
@@ -32,10 +31,9 @@ type DyBaseEntity struct {
 
 func (e *DyBaseEntity) GetCookie() map[string]interface{} {
 	return map[string]interface{}{
-		"odin_tt":   e.WebDevice.OdinTt,
-		"ttwid":     e.WebDevice.Ttwid,
-		"UIFID":     e.WebDevice.Uifid,
-		"sessionid": "10b74fa4aba90084a95dab3f617fc56f",
+		"odin_tt": e.WebDevice.OdinTt,
+		"ttwid":   e.WebDevice.Ttwid,
+		"UIFID":   e.WebDevice.Uifid,
 	}
 }
 
@@ -79,12 +77,13 @@ func (e *DyBaseEntity) GetHeaders() map[string]string {
 		"origin":             "https://www.douyin.com",
 		"priority":           "u=1, i",
 		"referer":            "https://www.douyin.com/",
-		"sec-ch-ua":          "Chromium;v=130, Google Chrome;v=130, Not?A_Brand;v=99",
+		"sec-ch-ua":          e.WebDevice.SecChUa,
 		"sec-ch-ua-mobile":   "?0",
-		"sec-ch-ua-platform": "macOS",
+		"sec-ch-ua-platform": e.WebDevice.SecChUaPlatform,
 		"sec-fetch-dest":     "empty",
 		"sec-fetch-mode":     "cors",
 		"sec-fetch-site":     "same-site",
+		"host":               "www.douyin.com",
 		"uifid":              e.WebDevice.Uifid,
 		"user-agent":         e.WebDevice.UserAgent,
 	}
@@ -99,6 +98,7 @@ func (e *DyBaseEntity) GetCommonParams() map[string]interface{} {
 		"source":              e.WebDevice.Source,
 		"update_version_code": e.WebDevice.UpdateVersionCode,
 		"pc_client_type":      e.WebDevice.PcClientType,
+		"pc_libra_divert":     e.WebDevice.PcLibraDivert,
 		"version_code":        e.WebDevice.VersionCode,
 		"version_name":        e.WebDevice.VersionName,
 		"cookie_enabled":      e.WebDevice.CookieEnabled,
@@ -166,14 +166,16 @@ func (e *DyBaseEntity) getMsToken(randomLength int) string {
 }
 
 func (e *DyBaseEntity) GetAbogus(params string, ua string) string {
+	var singUrl = viper.GetString("plugin.url")
 	result, _ := http.Post(singUrl+"/dy/abogus/sign", map[string]interface{}{
 		"params": params,
 		"ua":     ua,
-	}, "", nil, "")
+	}, e.GetCookieString(), e.GetHeaders(), "")
 	return result["aBogus"].(string)
 }
 
 func (e *DyBaseEntity) GetAcSign(Url string, acNonce string, ua string) string {
+	var singUrl = viper.GetString("plugin.url")
 	result, _ := http.Post(singUrl+"/dy/ac/sign", map[string]interface{}{
 		"Url":     Url,
 		"acNonce": acNonce,

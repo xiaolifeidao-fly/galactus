@@ -1,4 +1,4 @@
-const {use} = require("../application")
+const {use} = require("./application")
 
 const aBogus = require('./a_bogus')
 const sign = require('./sign')
@@ -17,8 +17,10 @@ function getAcSign(req, res){
 function getAbogus(req, res){
     const body = req.body;
     const params = body['params'];
+    console.log("req.body    ", body);
     const ua = body['ua'];
     var data = aBogus.generate_a_bogus(params, ua);
+    console.log("data    ", data);
     res.send({"aBogus":data});
 }
 

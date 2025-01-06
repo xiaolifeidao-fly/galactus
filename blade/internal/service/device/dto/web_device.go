@@ -40,4 +40,8 @@ type WebDeviceDTO struct {
 	OdinTt            string `json:"odin_tt"`
 	UserAgent         string `json:"user_agent"`
 	ProxyIp           string `json:"proxy_ip"`
+	Cookie            string `json:"cookie"`
+	PcLibraDivert     string `json:"pc_libra_divert"`
+	SecChUaPlatform   string `json:"sec_ch_ua_platform"`
+	SecChUa           string `json:"sec_ch_ua"`
 }

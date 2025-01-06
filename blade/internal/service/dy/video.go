@@ -37,8 +37,7 @@ func GetVideoShorUrl(shareUrl string, videoInfo *VideoInfo) (map[string]any, err
 	videoInfo.
 		AppendUrlParams("target", url.QueryEscape(shareUrl)).
 		AppendUrlParams("belong", "aweme").
-		AppendUrlParams("persist", "1").
-		AppendUrlParams("pc_libra_divert", "Mac")
+		AppendUrlParams("persist", "1")
 	return DoGet(videoInfo)
 }
 
@@ -59,8 +58,7 @@ func GetVideoInfo(videoInfo *VideoInfo) (map[string]any, error) {
 	url := "https://www.douyin.com/aweme/v1/web/aweme/detail/?"
 	videoInfo.Init(url)
 	videoInfo.
-		AppendUrlParams("aweme_id", videoInfo.VideoId).
-		AppendUrlParams("pc_libra_divert", "Mac")
+		AppendUrlParams("aweme_id", videoInfo.VideoId)
 	return DoGet(videoInfo)
 }
 
@@ -73,8 +71,6 @@ func PlayerVideo(videoInfo *VideoInfo) (map[string]any, error) {
 	}
 	url := "https://www-hj.douyin.com/aweme/v2/web/aweme/stats/?"
 	videoInfo.Init(url)
-	videoInfo.
-		AppendUrlParams("pc_libra_divert", "Mac")
 	return DoPost(videoInfo, params, "application/x-www-form-urlencoded; charset=UTF-8")
 }
 
@@ -86,8 +82,6 @@ func LoveVideo(videoInfo *VideoInfo) (map[string]any, error) {
 		"type":      1,
 	}
 	videoInfo.Init(url)
-	videoInfo.
-		AppendUrlParams("pc_libra_divert", "Mac")
 	return DoPost(videoInfo, params, "application/x-www-form-urlencoded; charset=UTF-8")
 }
 

@@ -39,7 +39,6 @@ func GetUserFavoriteByWeb(userFavoriteEntity *UserFavoriteEntity) (map[string]in
 		AppendUrlParams("min_cursor", userFavoriteEntity.MinCursor).
 		AppendUrlParams("publish_video_strategy_type", "2").
 		AppendUrlParams("cut_version", "1").
-		AppendUrlParams("pc_libra_divert", "Mac").
 		AppendUrlParams("count", userFavoriteEntity.Count)
 	return DoGet(userFavoriteEntity)
 }

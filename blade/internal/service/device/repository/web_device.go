@@ -41,6 +41,10 @@ type WebDevice struct {
 	OdinTt            string `orm:"column(odin_tt);size(500);null" description:"ODINTT"`
 	UserAgent         string `orm:"column(user_agent);size(500);null" description:"UserAgent"`
 	ProxyIp           string `orm:"column(proxy_ip);size(255);null" description:"代理IP地址"`
+	Cookie            string `orm:"column(cookie);size(2000);null" description:"Cookie"`
+	PcLibraDivert     string `orm:"column(pc_libra_divert);size(50);null" description:"PCLibraDivert"`
+	SecChUaPlatform   string `orm:"column(sec_ch_ua_platform);size(50);null" description:"SecChUaPlatform"`
+	SecChUa           string `orm:"column(sec_ch_ua);size(50);null" description:"SecChUa"`
 }
 
 func (d *WebDevice) TableName() string {
