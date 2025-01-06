@@ -1,6 +1,7 @@
 package a
 
 import (
+	devicebiz "galactus/blade/internal/service/device/biz"
 	"galactus/blade/internal/service/ip"
 	"galactus/blade/internal/service/ip/biz"
 	"galactus/common/middleware/db"
@@ -35,4 +36,7 @@ func Init() {
 	if err != nil {
 		log.Printf("ip init failed: %v", err)
 	}
+
+	// web device service init
+	devicebiz.InitDefaultWebDeviceManager()
 }

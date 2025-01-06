@@ -1,26 +1,37 @@
 package dictionary
 
 import (
+	"errors"
 	"galactus/blade/internal/service/dictionary/dto"
 	"galactus/blade/internal/service/dictionary/repository"
 	"galactus/common/middleware/db"
 )
 
-type DictionaryService struct {
+type DictionaryService interface {
+	GetByCode(code string) (*dto.DictionaryDTO, error)
+	GetByType(typeStr string) ([]dto.DictionaryDTO, error)
+	Save(dictDTO *dto.DictionaryDTO) error
+	Delete(id int64) error
+}
+
+type dictionaryService struct {
 	repo *repository.DictionaryRepository
 }
 
-func NewDictionaryService() *DictionaryService {
-	return &DictionaryService{
+func NewDictionaryService() DictionaryService {
+	return &dictionaryService{
 		repo: db.GetRepository[repository.DictionaryRepository](),
 	}
 }
 
 // GetByCode 根据编码获取字典
-func (s *DictionaryService) GetByCode(code string) (*dto.DictionaryDTO, error) {
+func (s *dictionaryService) GetByCode(code string) (*dto.DictionaryDTO, error) {
 	dict, err := s.repo.GetByCode(code)
 	if err != nil {
 		return nil, err
+	}
+	if dict == nil {
+		return nil, errors.New("not found")
 	}
 	return &dto.DictionaryDTO{
 		Code:        dict.Code,
@@ -31,7 +42,7 @@ func (s *DictionaryService) GetByCode(code string) (*dto.DictionaryDTO, error) {
 }
 
 // GetByType 根据类型获取字典列表
-func (s *DictionaryService) GetByType(typeStr string) ([]dto.DictionaryDTO, error) {
+func (s *dictionaryService) GetByType(typeStr string) ([]dto.DictionaryDTO, error) {
 	dicts, err := s.repo.GetByType(typeStr)
 	if err != nil {
 		return nil, err
@@ -49,7 +60,7 @@ func (s *DictionaryService) GetByType(typeStr string) ([]dto.DictionaryDTO, erro
 }
 
 // Save 保存字典
-func (s *DictionaryService) Save(dictDTO *dto.DictionaryDTO) error {
+func (s *dictionaryService) Save(dictDTO *dto.DictionaryDTO) error {
 	dict := &repository.Dictionary{
 		Code:        dictDTO.Code,
 		Value:       dictDTO.Value,
@@ -61,6 +72,6 @@ func (s *DictionaryService) Save(dictDTO *dto.DictionaryDTO) error {
 }
 
 // Delete 删除字典
-func (s *DictionaryService) Delete(id int64) error {
+func (s *dictionaryService) Delete(id int64) error {
 	return s.repo.Delete(uint(id))
 }

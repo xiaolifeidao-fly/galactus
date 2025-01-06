@@ -3,6 +3,7 @@ package biz
 import (
 	"context"
 	"fmt"
+	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -20,6 +21,11 @@ const (
 	webDevicePoolKey    = "WEB_DEVICE_POOL"
 )
 
+var (
+	defaultWebDeviceManager *WebDeviceManager
+	webDeviceManagerOnce    sync.Once
+)
+
 type WebDeviceManager struct {
 	mu                 sync.Mutex
 	webDevicePool      chan *dto.WebDeviceDTO
@@ -27,24 +33,36 @@ type WebDeviceManager struct {
 	dictionarySvc      dictionary.DictionaryService
 	webDeviceExpireKey string
 	ipManager          *biz.IpManager
-	deviceIpMap        map[string][]*dto.WebDeviceDTO // key: ip, value: devices using this ip
+	deviceIpMap        map[string][]*dto.WebDeviceDTO
 }
 
-func NewWebDeviceManager(
-	webDeviceSvc *device.WebDeviceService,
-	dictionarySvc dictionary.DictionaryService,
-) *WebDeviceManager {
-	manager := &WebDeviceManager{
-		webDevicePool:      make(chan *dto.WebDeviceDTO, webDevicePageSize),
-		webDeviceSvc:       webDeviceSvc,
-		dictionarySvc:      dictionarySvc,
-		webDeviceExpireKey: "WEB_DEVICE_EXPIRE",
-		ipManager:          biz.GetDefaultIpManager(),
-		deviceIpMap:        make(map[string][]*dto.WebDeviceDTO),
+// InitDefaultWebDeviceManager 初始化默认的WebDeviceManager实例
+func InitDefaultWebDeviceManager() {
+	webDeviceManagerOnce.Do(func() {
+		defaultWebDeviceManager = &WebDeviceManager{
+			webDevicePool:      make(chan *dto.WebDeviceDTO, webDevicePageSize),
+			webDeviceSvc:       device.NewWebDeviceService(),
+			dictionarySvc:      dictionary.NewDictionaryService(),
+			webDeviceExpireKey: "WEB_DEVICE_EXPIRE",
+			ipManager:          biz.GetDefaultIpManager(),
+			deviceIpMap:        make(map[string][]*dto.WebDeviceDTO),
+		}
+		// 注册为IP更新的观察者
+		defaultWebDeviceManager.ipManager.RegisterObserver(defaultWebDeviceManager)
+
+		// 初始化设备池
+		if err := defaultWebDeviceManager.InitWebDevicePool(context.Background()); err != nil {
+			log.Printf("Failed to initialize WebDeviceManager: %v", err)
+		}
+	})
+}
+
+// GetDefaultWebDeviceManager 获取默认的WebDeviceManager实例
+func GetDefaultWebDeviceManager() *WebDeviceManager {
+	if defaultWebDeviceManager == nil {
+		panic("WebDeviceManager is not initialized. Call InitDefaultWebDeviceManager first.")
 	}
-	// 注册为IP更新的观察者
-	manager.ipManager.RegisterObserver(manager)
-	return manager
+	return defaultWebDeviceManager
 }
 
 // OnIpUpdate 实现IP更新的观察者接口
