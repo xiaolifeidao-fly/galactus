@@ -11,18 +11,37 @@ import (
 	"github.com/parnurzeal/gorequest"
 )
 
-var request *gorequest.SuperAgent
-
-func init() {
-	request = InitHttpRequest()
+type SuperAgentPool struct {
+	pool chan *gorequest.SuperAgent
 }
 
-func InitHttpRequest() *gorequest.SuperAgent {
-	return gorequest.New().Timeout(90 * time.Second)
+func NewSuperAgentPool(size int) *SuperAgentPool {
+	p := &SuperAgentPool{
+		pool: make(chan *gorequest.SuperAgent, size),
+	}
+	for i := 0; i < size; i++ {
+		p.pool <- gorequest.New().Timeout(90 * time.Second)
+	}
+	return p
 }
+
+func (p *SuperAgentPool) Get() *gorequest.SuperAgent {
+	return <-p.pool
+}
+
+func (p *SuperAgentPool) Put(req *gorequest.SuperAgent) {
+	req.ClearSuperAgent()
+	req.Timeout(90 * time.Second)
+	p.pool <- req
+}
+
+var superAgentPool = NewSuperAgentPool(10) // 设置池的大小
 
 func Get(requestUrl string, cookie string, headers map[string]string, ip string) (map[string]interface{}, error) {
-	req := request.Get(requestUrl)
+	req := superAgentPool.Get()
+	defer superAgentPool.Put(req)
+
+	req.Get(requestUrl)
 	if ip != "" {
 		proxyUrl, err := url.Parse(ip)
 		if err == nil {
@@ -45,11 +64,14 @@ func Get(requestUrl string, cookie string, headers map[string]string, ip string)
 }
 
 func PostForm(requestUrl string, requestBody map[string]interface{}, cookie string, headers map[string]string, ip string) (map[string]interface{}, error) {
+	req := superAgentPool.Get()
+	defer superAgentPool.Put(req)
+
 	formData := url.Values{}
 	for key, value := range requestBody {
 		formData.Add(key, utils.InterfaceToString(value))
 	}
-	req := request.Post(requestUrl).Type("form").Send(formData.Encode())
+	req.Post(requestUrl).Type("form").Send(formData.Encode())
 	if ip != "" {
 		proxyUrl, err := url.Parse(ip)
 		if err == nil {
@@ -72,7 +94,10 @@ func PostForm(requestUrl string, requestBody map[string]interface{}, cookie stri
 }
 
 func Post(requestUrl string, requestBody map[string]interface{}, cookie string, headers map[string]string, ip string) (map[string]interface{}, error) {
-	req := request.Post(requestUrl).Send(requestBody)
+	req := superAgentPool.Get()
+	defer superAgentPool.Put(req)
+
+	req.Post(requestUrl).Send(requestBody)
 	if ip != "" {
 		proxyUrl, err := url.Parse(ip)
 		if err == nil {
@@ -95,7 +120,10 @@ func Post(requestUrl string, requestBody map[string]interface{}, cookie string, 
 }
 
 func GetToResponse(requestUrl string, cookie string, headers map[string]string, ip string) (*http.Response, error) {
-	req := request.Get(requestUrl)
+	req := superAgentPool.Get()
+	defer superAgentPool.Put(req)
+
+	req.Get(requestUrl)
 	if ip != "" {
 		proxyUrl, err := url.Parse(ip)
 		if err == nil {
