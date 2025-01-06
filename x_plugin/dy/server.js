@@ -1,5 +1,5 @@
 const  {start, init} = require("./application")
-const dyRouter = require("./dy/router")
+const dyRouter = require("./router")
 
 
 function register(){

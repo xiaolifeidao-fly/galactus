@@ -1,4 +1,4 @@
-const {use} = require("../application")
+const {use} = require("./application")
 
 const aBogus = require('./a_bogus')
 const sign = require('./sign')
