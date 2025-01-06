@@ -15,6 +15,7 @@ func init() {
 
 func Init() {
 	// db init
+	vipper.Init()
 	db.InitDB()
 
 	// redis init
