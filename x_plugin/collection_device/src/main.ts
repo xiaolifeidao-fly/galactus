@@ -11,7 +11,7 @@ async function sleep(ms: number){
 }
 
 async function collectDevice(num : number){
-    const engine = new DyEngine<{}>(randomUUID().toString());
+    const engine = new DyEngine<{}>("dy_device_collect");
     try{
         const monitor = new DyDeviceCollectMonitor(num);
         const page = await engine.init();
@@ -20,8 +20,12 @@ async function collectDevice(num : number){
         }
         return await engine.openWaitMonitor(page, "https://www.douyin.com/?recommend=1", monitor);
     }finally{
-        console.log("collectDevice finally ", num);
-        await engine.release();
+        try{
+            await engine.closeContext();
+            await sleep(200);
+        }catch(e){
+            console.error("collectDevice close error", e);
+        }
     }  
 }
 

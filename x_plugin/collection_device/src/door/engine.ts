@@ -5,6 +5,8 @@ import { Monitor, MonitorChain, MonitorRequest, MonitorResponse } from './monito
 import { DoorEntity } from './entity';
 import { ActionChain, ActionResult } from './element/element';
 
+const browserMap = new Map<string, Browser>();
+
 export abstract class DoorEngine<T = any> {
 
     private chromePath: string | undefined;
@@ -51,9 +53,7 @@ export abstract class DoorEngine<T = any> {
             return undefined;
         }
         this.browser = await this.createBrowser();
-        if(!this.context){
-            this.context = await this.createContext();
-        }
+        this.context = await this.createContext();
         if(!this.context){
             return undefined;
         }
@@ -61,6 +61,7 @@ export abstract class DoorEngine<T = any> {
         if(url){
             await page.goto(url);
         }
+        console.log("new context and new page ")
         this.onRequest(page);
         this.onResponse(page);
         this.page = page;
@@ -141,9 +142,13 @@ export abstract class DoorEngine<T = any> {
     }
 
     public async openWaitMonitor(page : Page,  url: string, monitor : Monitor<T | any>, headers: Record<string, string> = {}){
-        this.addMonitor(monitor);
-        await this.startMonitor();
-        await page.goto(url, headers);
+        try{
+            this.addMonitor(monitor);
+            await this.startMonitor();
+            await page.goto(url, { timeout: 5000});
+        }catch(e){
+            console.error("openWaitMonitor error", e);
+        }
         const doorEntity = await monitor.waitForAction();
         return doorEntity;
     }
@@ -151,9 +156,13 @@ export abstract class DoorEngine<T = any> {
 
 
     public async openWaitMonitorChain(page : Page,  url: string, monitorChain: MonitorChain<T | any>, headers: Record<string, string> = {}){
-        this.addMonitorChain(monitorChain);
-        await this.startMonitor();
-        await page.goto(url, headers);
+        try{
+            this.addMonitorChain(monitorChain);
+            await this.startMonitor();
+            page.goto(url, { timeout: 5000});
+        }catch(e){
+            console.error("openWaitMonitorChain error", e);
+        }
         const doorEntity = await monitorChain.waitForAction();
         return doorEntity;
     }
@@ -246,34 +255,50 @@ export abstract class DoorEngine<T = any> {
         if(!this.browser){
             return;
         }
+        const macbook = devices['MacBook Pro 16'];
         const context = await this.browser?.newContext({
+            ...macbook,
             bypassCSP: true,
-            userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36', // 修改为常见浏览器的 User-Agent
+            userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36', 
+            extraHTTPHeaders: {
+                'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+                'sec-ch-ua-mobile': '?0', // 设置为移动设备
+                'sec-ch-ua-platform': '"macOS"',
+              },
+              locale: 'zh-CN', 
+            // proxy: {
+            //     server: 'http://127.0.0.1:8888',
+            // },
             viewport: { width: 1920, height: 1080 }
+        });
+
+        // 注入脚本来修改 navigator 信息
+        await context.addInitScript(() => {
+            // 模拟不同的 navigator 信息
+            //@ts-ignore    
+            Object.defineProperty(navigator, 'userAgent', {
+            get: () => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            });
+            //@ts-ignore
+            Object.defineProperty(navigator, 'platform', {
+            get: () => 'MacIntel',
+            });
+            //@ts-ignore
+            Object.defineProperty(navigator, 'appVersion', {
+            get: () => '5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            });
         });
         return context;
     }
 
     async createBrowser(){
-        // let key = this.headless.toString();
-        // if (this.chromePath) {
-        //     key += "_" + this.chromePath;
-        // }
-        // if(browserMap.has(key)){
-        //     return browserMap.get(key);
-        // }
-        // const browser = await chromium.launch({
-        //     headless: this.headless,
-        //     executablePath: this.chromePath,
-        //     args: [
-        //         '--no-sandbox', // 取消沙箱，某些网站可能会检测到沙箱模式
-        //         '--disable-setuid-sandbox',
-        //         '--disable-blink-features=AutomationControlled',  // 禁用浏览器自动化控制特性
-        //       ]
-        // });
-        // browserMap.set(key, browser);
-        // return browser;
-
+        let key = this.headless.toString();
+        if (this.chromePath) {
+            key += "_" + this.chromePath;
+        }
+        if(browserMap.has(key)){
+            return browserMap.get(key);
+        }
         const browser = await chromium.launch({
             headless: this.headless,
             executablePath: this.chromePath,
@@ -283,6 +308,7 @@ export abstract class DoorEngine<T = any> {
                 '--disable-blink-features=AutomationControlled',  // 禁用浏览器自动化控制特性
               ]
         });
+        browserMap.set(key, browser);
         return browser;
     }
 

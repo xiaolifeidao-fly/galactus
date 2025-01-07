@@ -20,7 +20,7 @@ export abstract class Monitor<T = any> {
     allowRepeat: boolean = false;
     startTag: boolean = false;
 
-    constructor(timeout: number = 10000){
+    constructor(timeout: number = 30000){
         this.timeout = timeout;
         this.eventEmitter = new EventEmitter();
         this.waitPromise = new Promise<DoorEntity<T>>((resolve) => {
