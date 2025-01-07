@@ -9,22 +9,33 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func WebDeviceRouters(engine *gin.RouterGroup) {
+type WebDeviceHandler struct {
+	*routers.BaseHandler
+	webDeviceService *deviceService.WebDeviceService
+}
+
+func NewWebDeviceHandler() *WebDeviceHandler {
+	return &WebDeviceHandler{
+		webDeviceService: deviceService.NewWebDeviceService(),
+	}
+}
+
+func (h *WebDeviceHandler) RegisterHandler(engine *gin.RouterGroup) {
 	//用户列表
-	engine.GET("/devices/list", list)
-	engine.POST("/devices/save", save)
+	engine.GET("/devices/list", h.list)
+	engine.POST("/devices/save", h.save)
 
 }
 
-func save(context *gin.Context) {
+func (h *WebDeviceHandler) save(context *gin.Context) {
 	var device dto.WebDeviceDTO
 	context.ShouldBindJSON(&device)
 	deviceDTO := converter.ToDTO[dto.WebDeviceDTO](&device)
-	_, err := deviceService.NewWebDeviceService().Save(deviceDTO)
+	_, err := h.webDeviceService.Save(deviceDTO)
 	routers.ToJson(context, "保存成功", err)
 }
 
-func list(context *gin.Context) {
-	devices, err := deviceService.NewWebDeviceService().GetWebDeviceList()
+func (h *WebDeviceHandler) list(context *gin.Context) {
+	devices, err := h.webDeviceService.GetWebDeviceList()
 	routers.ToJson(context, devices, err)
 }

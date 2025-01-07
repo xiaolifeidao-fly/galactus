@@ -1,11 +1,11 @@
 package main
 
 import (
-	"galactus/blade/a"
+	"galactus/blade/initialization"
 	"galactus/blade/routers"
 )
 
 func main() {
-	a.Init()
+	initialization.Init()
 	routers.Run()
 }

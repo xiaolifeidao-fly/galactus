@@ -50,7 +50,8 @@ func InitIpManager() error {
 func (s *IpManager) InitIp() error {
 	proxyIps, err := s.baseService.GetProxyIpsByType("FINISH_QUERY")
 	if err != nil || len(proxyIps) == 0 {
-		return errors.New("not found ip config")
+		log.Printf("not found ip config")
+		return nil
 	}
 
 	s.ipEntities = proxyIps
