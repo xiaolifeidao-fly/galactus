@@ -19,6 +19,7 @@ const (
 	webDeviceExpireTime = 30 * 60 // 30分钟
 	webDevicePageSize   = 5000
 	webDevicePoolKey    = "WEB_DEVICE_POOL"
+	deviceTimeout       = 5 * time.Second // 固定5秒超时
 )
 
 var (
@@ -120,6 +121,9 @@ func (m *WebDeviceManager) InitWebDevicePool() error {
 
 // GetWebDevice 获取一个可用设备
 func (m *WebDeviceManager) GetWebDevice() (*dto.WebDeviceDTO, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), deviceTimeout)
+	defer cancel()
+
 	select {
 	case dev := <-m.webDevicePool:
 		// 检查设备是否可用
@@ -142,13 +146,17 @@ func (m *WebDeviceManager) GetWebDevice() (*dto.WebDeviceDTO, error) {
 
 		// 将设备放回池中
 		go func() {
-			m.webDevicePool <- dev
+			select {
+			case m.webDevicePool <- dev:
+			case <-ctx.Done():
+				log.Printf("放回设备池超时: %v", ctx.Err())
+			}
 		}()
 
 		return dev, nil
 
-	case <-context.Background().Done():
-		return nil, context.Background().Err()
+	case <-ctx.Done():
+		return nil, fmt.Errorf("获取设备超时: %v", ctx.Err())
 	}
 }
 
