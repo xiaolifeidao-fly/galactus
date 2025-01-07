@@ -50,6 +50,7 @@ func getUserFavoriteBySecUid(context *gin.Context) {
 	secUid := context.Query("secUid")
 	maxCursor, _ := strconv.Atoi(context.Query("maxCursor"))
 	minCursor, _ := strconv.Atoi(context.Query("minCursor"))
+	count, _ := strconv.Atoi(context.Query("count"))
 	webDeviceDTO, _ := webDeviceService.NewWebDeviceService().GetById(6)
 	ip := "" //TODO 获取IP
 	userFavoriteEntity := &dy.UserFavoriteEntity{
@@ -57,6 +58,7 @@ func getUserFavoriteBySecUid(context *gin.Context) {
 		SecUid:       secUid,
 		MaxCursor:    maxCursor,
 		MinCursor:    minCursor,
+		Count:        count,
 	}
 	result, err := dy.GetUserFavoriteByWeb(userFavoriteEntity)
 	routers.ToJson(context, result, err)

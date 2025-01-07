@@ -32,7 +32,9 @@ type UserFavoriteEntity struct {
 func GetUserFavoriteByWeb(userFavoriteEntity *UserFavoriteEntity) (map[string]interface{}, error) {
 	url := "https://www.douyin.com/aweme/v1/web/aweme/favorite/?"
 	userFavoriteEntity.Init(url)
-	userFavoriteEntity.Count = 18
+	if userFavoriteEntity.Count == 0 {
+		userFavoriteEntity.Count = 18
+	}
 	userFavoriteEntity.
 		AppendUrlParams("sec_user_id", userFavoriteEntity.SecUid).
 		AppendUrlParams("max_cursor", userFavoriteEntity.MaxCursor).

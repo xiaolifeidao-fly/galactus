@@ -5,10 +5,6 @@ import { Monitor, MonitorChain, MonitorRequest, MonitorResponse } from './monito
 import { DoorEntity } from './entity';
 import { ActionChain, ActionResult } from './element/element';
 
-const browserMap = new Map<string, Browser>();
-
-const contextMap = new Map<string, BrowserContext>();
-
 export abstract class DoorEngine<T = any> {
 
     private chromePath: string | undefined;
@@ -71,9 +67,19 @@ export abstract class DoorEngine<T = any> {
         return page;
     }
 
+    public async release(){
+        await this.closePage();
+        await this.closeContext();
+        await this.closeBrowser();
+    }
+
     public async closePage(){
-        if(this.page){
-            await this.page.close();
+        try{
+            if(this.page && !this.page.isClosed()){
+                await this.page.close();
+            }
+        }catch(e){
+            console.error("closePage error", e);
         }
     }
 
@@ -209,14 +215,22 @@ export abstract class DoorEngine<T = any> {
     }
 
     public async closeContext(){
-        if(this.context){
-            await this.context.close();
+        try{
+            if(this.context){
+                await this.context.close();
+            }
+        }catch(e){
+            console.error("closeContext error", e);
         }
     }
 
     public async closeBrowser(){
-        if(this.browser){
-            await this.browser.close();
+        try{
+            if(this.browser){
+                await this.browser.close();
+            }
+        }catch(e){
+            console.error("closeBrowser error",e);
         }
     }
 
@@ -241,13 +255,25 @@ export abstract class DoorEngine<T = any> {
     }
 
     async createBrowser(){
-        let key = this.headless.toString();
-        if (this.chromePath) {
-            key += "_" + this.chromePath;
-        }
-        if(browserMap.has(key)){
-            return browserMap.get(key);
-        }
+        // let key = this.headless.toString();
+        // if (this.chromePath) {
+        //     key += "_" + this.chromePath;
+        // }
+        // if(browserMap.has(key)){
+        //     return browserMap.get(key);
+        // }
+        // const browser = await chromium.launch({
+        //     headless: this.headless,
+        //     executablePath: this.chromePath,
+        //     args: [
+        //         '--no-sandbox', // 取消沙箱，某些网站可能会检测到沙箱模式
+        //         '--disable-setuid-sandbox',
+        //         '--disable-blink-features=AutomationControlled',  // 禁用浏览器自动化控制特性
+        //       ]
+        // });
+        // browserMap.set(key, browser);
+        // return browser;
+
         const browser = await chromium.launch({
             headless: this.headless,
             executablePath: this.chromePath,
@@ -257,7 +283,6 @@ export abstract class DoorEngine<T = any> {
                 '--disable-blink-features=AutomationControlled',  // 禁用浏览器自动化控制特性
               ]
         });
-        browserMap.set(key, browser);
         return browser;
     }
 
