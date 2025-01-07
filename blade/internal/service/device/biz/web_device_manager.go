@@ -37,12 +37,8 @@ type WebDeviceManager struct {
 	deviceIpMap        map[string][]*dto.WebDeviceDTO
 }
 
-func init() {
-	InitDefaultWebDeviceManager()
-}
-
 // InitDefaultWebDeviceManager 初始化默认的WebDeviceManager实例
-func InitDefaultWebDeviceManager() {
+func InitDefaultWebDeviceManager() error {
 	webDeviceManagerOnce.Do(func() {
 		defaultWebDeviceManager = &WebDeviceManager{
 			webDevicePool:      make(chan *dto.WebDeviceDTO, webDevicePageSize),
@@ -60,6 +56,7 @@ func InitDefaultWebDeviceManager() {
 			log.Printf("Failed to initialize WebDeviceManager: %v", err)
 		}
 	})
+	return nil
 }
 
 // GetDefaultWebDeviceManager 获取默认的WebDeviceManager实例

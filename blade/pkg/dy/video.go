@@ -32,8 +32,8 @@ func convertByVideoUrl(context *gin.Context) {
 }
 
 func getVideoInfo(context *gin.Context) {
-	videoId := context.Query("videoId");
-	deviceManager.GetWebDevice(context.Request.Context())
+	videoId := context.Query("videoId")
+	deviceManager.GetWebDevice()
 
 	webDeviceDTO, _ := webDeviceService.NewWebDeviceService().GetById(15)
 	ip := "" //TODO 获取IP

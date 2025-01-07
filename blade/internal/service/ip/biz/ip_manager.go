@@ -28,23 +28,23 @@ type IpManager struct {
 	observers   []IpObserver
 }
 
-func InitDefaultIpManager() {
+// GetDefaultIpManager 只负责获取实例，不负责初始化数据
+func GetDefaultIpManager() *IpManager {
 	ipManagerOnce.Do(func() {
-		defaultIpInstance = &IpManager{
-			baseService: ip.NewIpService(),
-			observers:   make([]IpObserver, 0),
-		}
-		if err := defaultIpInstance.InitIp(); err != nil {
-			log.Printf("Failed to initialize IpManager: %v", err)
+		if defaultIpInstance == nil {
+			defaultIpInstance = &IpManager{
+				baseService: ip.NewIpService(),
+				observers:   make([]IpObserver, 0),
+			}
 		}
 	})
+	return defaultIpInstance
 }
 
-func GetDefaultIpManager() *IpManager {
-	if defaultIpInstance == nil {
-		panic("IpManager is not initialized. Call InitDefaultIpManager first.")
-	}
-	return defaultIpInstance
+// InitIpManager 显式初始化方法，包含数据加载
+func InitIpManager() error {
+	manager := GetDefaultIpManager()
+	return manager.InitIp()
 }
 
 func (s *IpManager) InitIp() error {

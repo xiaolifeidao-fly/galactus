@@ -49,7 +49,7 @@ var (
 	zdyOnce            sync.Once
 )
 
-func InitDefaultZDYHttpProxyService(url, key, api string) {
+func InitDefaultZDYHttpProxyService(url, key, api string) error {
 	zdyOnce.Do(func() {
 		defaultZDYInstance = &ZDYHttpProxyService{
 			url:     url,
@@ -58,6 +58,7 @@ func InitDefaultZDYHttpProxyService(url, key, api string) {
 			ipQueue: NewIPQueue(),
 		}
 	})
+	return nil
 }
 
 func GetDefaultZDYHttpProxyService() *ZDYHttpProxyService {
