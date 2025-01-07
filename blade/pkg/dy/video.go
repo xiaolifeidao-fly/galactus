@@ -1,6 +1,8 @@
 package dy
 
 import (
+	"errors"
+	"galactus/blade/internal/service/device"
 	"galactus/blade/internal/service/device/biz"
 	"galactus/blade/internal/service/dy"
 	"galactus/blade/internal/service/dy/dto"
@@ -16,11 +18,13 @@ import (
 type VideoHandler struct {
 	*routers.BaseHandler
 	*biz.WebDeviceManager
+	WebDeviceService *device.WebDeviceService
 }
 
 func NewVideoHandler() *VideoHandler {
 	return &VideoHandler{
 		WebDeviceManager: biz.GetDefaultWebDeviceManager(),
+		WebDeviceService: device.NewWebDeviceService(),
 	}
 }
 
@@ -41,6 +45,10 @@ func (h *VideoHandler) convertByVideoUrl(context *gin.Context) {
 func (h *VideoHandler) getVideoInfo(context *gin.Context) {
 	videoId := context.Query("videoId")
 	webDeviceDTO, _ := h.GetWebDevice()
+	if webDeviceDTO == nil {
+		routers.ToJson(context, nil, errors.New("webDeviceDTO is nil"))
+		return
+	}
 	ip := "" //TODO 获取IP
 	videoInfo := &dy.VideoInfo{
 		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),

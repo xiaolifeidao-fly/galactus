@@ -170,7 +170,7 @@ func (e *DyBaseEntity) GetAbogus(params string, ua string) string {
 	result, _ := http.Post(singUrl+"/dy/abogus/sign", map[string]interface{}{
 		"params": params,
 		"ua":     ua,
-	}, e.GetCookieString(), e.GetHeaders(), "")
+	}, "", nil, "")
 	return result["aBogus"].(string)
 }
 

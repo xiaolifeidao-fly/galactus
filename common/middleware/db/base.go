@@ -30,7 +30,7 @@ func (r *Repository[T]) SetDb(db *gorm.DB) {
 
 func (r *Repository[T]) GetOne(sql string, values ...interface{}) (T, error) {
 	var repoValue *T = new(T)
-	err := r.Db.Raw(sql, values).Scan(&repoValue).Error
+	err := r.Db.Raw(sql, values...).Scan(&repoValue).Error
 	if err == gorm.ErrRecordNotFound {
 		return *repoValue, err
 	}
@@ -39,7 +39,7 @@ func (r *Repository[T]) GetOne(sql string, values ...interface{}) (T, error) {
 
 func (r *Repository[T]) GetList(sql string, values ...interface{}) ([]T, error) {
 	var entities []T
-	err := r.Db.Raw(sql, values).Find(&entities).Error
+	err := r.Db.Raw(sql, values...).Find(&entities).Error
 	if err == gorm.ErrRecordNotFound {
 		return []T{}, err
 	}
