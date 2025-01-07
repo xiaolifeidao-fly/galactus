@@ -17,7 +17,6 @@ import (
 
 const (
 	webDeviceExpireTime = 30 * 60 // 30分钟
-	webDevicePageSize   = 5000
 	webDevicePoolKey    = "WEB_DEVICE_POOL"
 	deviceTimeout       = 5 * time.Second // 固定5秒超时
 )
@@ -37,11 +36,21 @@ type WebDeviceManager struct {
 	deviceIpMap        map[string][]*dto.WebDeviceDTO
 }
 
+// getWebDeviceRange 获取设备范围配置
+func (m *WebDeviceManager) getWebDeviceRange() (int64, error) {
+	webDeviceRange, err := m.dictionarySvc.GetByCode("WEB_DEVICE_ID_RANGE")
+	if err != nil {
+		return 0, fmt.Errorf("get web device range config error: %v", err)
+	}
+	return strconv.ParseInt(webDeviceRange.Value, 10, 64)
+}
+
 // InitDefaultWebDeviceManager 初始化默认的WebDeviceManager实例
 func InitDefaultWebDeviceManager() error {
 	webDeviceManagerOnce.Do(func() {
+		// 获取设备范围配置
 		defaultWebDeviceManager = &WebDeviceManager{
-			webDevicePool:      make(chan *dto.WebDeviceDTO, webDevicePageSize),
+			webDevicePool:      make(chan *dto.WebDeviceDTO, 5000), // 使用固定大小作为channel容量
 			webDeviceSvc:       device.NewWebDeviceService(),
 			dictionarySvc:      dictionary.NewDictionaryService(),
 			webDeviceExpireKey: "WEB_DEVICE_EXPIRE",
@@ -89,10 +98,10 @@ func (m *WebDeviceManager) InitWebDevicePool() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// 获取设备ID范围
-	_, err := m.dictionarySvc.GetByCode("WEB_DEVICE_ID_RANGE")
+	// 获取设备范围
+	pageSize, err := m.getWebDeviceRange()
 	if err != nil {
-		return fmt.Errorf("get web device range config error: %v", err)
+		return err
 	}
 
 	// 获取当前索引
@@ -102,7 +111,7 @@ func (m *WebDeviceManager) InitWebDevicePool() error {
 	}
 
 	// 获取设备列表
-	devices, err := m.webDeviceSvc.GetActiveByRangeId(currentIndex, currentIndex+webDevicePageSize)
+	devices, err := m.webDeviceSvc.GetActiveByRangeId(currentIndex, currentIndex+pageSize)
 	if err != nil {
 		return fmt.Errorf("get web devices error: %v", err)
 	}
@@ -206,6 +215,12 @@ func (m *WebDeviceManager) getNewWebDevice() (*dto.WebDeviceDTO, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	// 获取设备范围
+	pageSize, err := m.getWebDeviceRange()
+	if err != nil {
+		return nil, err
+	}
+
 	// 获取当前索引
 	currentIndex, err := m.getCurrentIndex()
 	if err != nil {
@@ -213,7 +228,7 @@ func (m *WebDeviceManager) getNewWebDevice() (*dto.WebDeviceDTO, error) {
 	}
 
 	// 获取新的设备列表
-	devices, err := m.webDeviceSvc.GetActiveByRangeId(currentIndex, currentIndex+webDevicePageSize)
+	devices, err := m.webDeviceSvc.GetActiveByRangeId(currentIndex, currentIndex+pageSize)
 	if err != nil {
 		return nil, fmt.Errorf("get web devices error: %v", err)
 	}
@@ -225,7 +240,7 @@ func (m *WebDeviceManager) getNewWebDevice() (*dto.WebDeviceDTO, error) {
 			return nil, fmt.Errorf("get min id error: %v", err)
 		}
 
-		devices, err = m.webDeviceSvc.GetActiveByRangeId(minId, minId+webDevicePageSize)
+		devices, err = m.webDeviceSvc.GetActiveByRangeId(minId, minId+pageSize)
 		if err != nil {
 			return nil, fmt.Errorf("get web devices error: %v", err)
 		}
