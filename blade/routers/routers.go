@@ -1,8 +1,6 @@
 package routers
 
 import (
-	"galactus/blade/pkg/device"
-	"galactus/blade/pkg/dy"
 	"galactus/common/middleware/routers"
 
 	"github.com/gin-gonic/gin"
@@ -10,9 +8,10 @@ import (
 
 var router *routers.GinRouter
 
-func init() {
+func Init() {
 	router = routers.NewGinRouter()
-	InitAllRouters(router)
+	registerHandlers := registerHandler()
+	InitAllRouters(router, registerHandlers)
 }
 
 func Run(middleware ...gin.HandlerFunc) error {
@@ -22,8 +21,8 @@ func Run(middleware ...gin.HandlerFunc) error {
 
 // InitAllRouters 初始化所有router
 
-func InitAllRouters(router *routers.GinRouter) {
-	router.Include(device.WebDeviceRouters)
-	router.Include(dy.UserRouters)
-	router.Include(dy.VideoRouters)
+func InitAllRouters(router *routers.GinRouter, handlers []routers.Handler) {
+	for _, handler := range handlers {
+		router.Include(handler.RegisterHandler)
+	}
 }

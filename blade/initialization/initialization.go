@@ -1,18 +1,15 @@
-package a
+package initialization
 
 import (
 	devicebiz "galactus/blade/internal/service/device/biz"
 	"galactus/blade/internal/service/ip"
 	"galactus/blade/internal/service/ip/biz"
+	"galactus/blade/routers"
 	"galactus/common/middleware/db"
 	"galactus/common/middleware/redis"
 	"galactus/common/middleware/vipper"
 	"log"
 )
-
-func init() {
-	vipper.Init()
-}
 
 func Init() {
 	// db init
@@ -39,4 +36,7 @@ func Init() {
 
 	// web device service init
 	devicebiz.InitDefaultWebDeviceManager()
+
+	// routers init
+	routers.Init()
 }

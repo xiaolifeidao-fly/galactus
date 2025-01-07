@@ -37,10 +37,6 @@ type WebDeviceManager struct {
 	deviceIpMap        map[string][]*dto.WebDeviceDTO
 }
 
-func init() {
-	InitDefaultWebDeviceManager()
-}
-
 // InitDefaultWebDeviceManager 初始化默认的WebDeviceManager实例
 func InitDefaultWebDeviceManager() {
 	webDeviceManagerOnce.Do(func() {
