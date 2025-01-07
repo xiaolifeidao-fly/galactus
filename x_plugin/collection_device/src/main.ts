@@ -6,22 +6,39 @@ import { DyEngine } from "@src/door/dy/dy.engine";
 import { DyDeviceCollectMonitor } from "@src/door/dy/monitor/device/monitor";
 
 
+async function sleep(ms: number){
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-
-async function main(){
-
-    const engine = new DyEngine(randomUUID().toString());
+async function collectDevice(num : number){
+    const engine = new DyEngine<{}>(randomUUID().toString());
     try{
-        const monitor = new DyDeviceCollectMonitor();
+        const monitor = new DyDeviceCollectMonitor(num);
         const page = await engine.init();
         if(!page){ 
             return;
         }
         return await engine.openWaitMonitor(page, "https://www.douyin.com/?recommend=1", monitor);
     }finally{
-        await engine.closePage();
+        console.log("collectDevice finally ", num);
+        await engine.release();
     }  
+}
 
+
+async function main(){
+    const num = process.env.COLLECT_NUM;
+    console.log("COLLECT_NUM is ", num);
+    if(!num){
+        console.log("COLLECT_NUM is not set");
+        return;
+    }
+    for(let i = 0; i < Number(num); i++){
+        console.log("collectDevice start ", i);
+        await collectDevice(i);
+        await sleep(2000);
+        console.log("collectDevice end ", i);
+    }
 }
 
 main();

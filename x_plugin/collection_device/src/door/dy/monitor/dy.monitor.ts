@@ -17,7 +17,6 @@ export abstract class DyMonitorResponse<T> extends MonitorResponse<T> {
         if(url.includes(".js")){
             return false;
         }
-        console.log("url", url);
         if(url.includes(this.getApiName())){
             return true;
         }

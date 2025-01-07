@@ -2,6 +2,7 @@ package dy
 
 import (
 	webDeviceService "galactus/blade/internal/service/device"
+	"galactus/blade/internal/service/device/biz"
 	"galactus/blade/internal/service/dy"
 	"galactus/blade/internal/service/dy/dto"
 	"galactus/common/middleware/routers"
@@ -12,6 +13,8 @@ import (
 // TODO: 下面获取webDeviceDTO的逻辑要抽取出来一个模块，从里面获取一个设备，每次尽可能获取不一样的设备，轮询使用
 // TODO: web_device 表增加IP字段, 一个web_device 对应一个IP，这个IP失效的话，重新更新
 // TODO: 获取IP的逻辑要抽取出来一个模块，从里面获取一个IP，每次尽可能获取不一样的IP，轮询使用
+
+var deviceManager = biz.GetDefaultWebDeviceManager()
 
 func VideoRouters(engine *gin.RouterGroup) {
 	engine.GET("/dy/video/player", playerVideo)
@@ -29,7 +32,9 @@ func convertByVideoUrl(context *gin.Context) {
 }
 
 func getVideoInfo(context *gin.Context) {
-	videoId := context.Query("videoId")
+	videoId := context.Query("videoId");
+	deviceManager.GetWebDevice(context.Request.Context())
+
 	webDeviceDTO, _ := webDeviceService.NewWebDeviceService().GetById(15)
 	ip := "" //TODO 获取IP
 	videoInfo := &dy.VideoInfo{
@@ -54,7 +59,7 @@ func playerVideo(context *gin.Context) {
 
 func loveVideo(context *gin.Context) {
 	videoId := context.Query("videoId")
-	webDeviceDTO, _ := webDeviceService.NewWebDeviceService().GetById(6)
+	webDeviceDTO, _ := webDeviceService.NewWebDeviceService().GetById(31)
 	ip := "" //TODO 获取IP
 	videoInfo := &dy.VideoInfo{
 		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),

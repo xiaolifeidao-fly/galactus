@@ -7,6 +7,13 @@ import { instance } from "@src/utils/axios";
 
 export class DyDeviceCollectMonitor extends DyMonitorResponse<{}>{
 
+    private num: number;
+
+    constructor(num: number){
+        super();
+        this.num = num;
+    }
+
     getApiName(): string {
        return "web/hot/search/list/"
     }
@@ -32,13 +39,28 @@ export class DyDeviceCollectMonitor extends DyMonitorResponse<{}>{
         return {odinTt, ttwid};
     }
 
+    validateParams(params: {[key: string]: string}){
+        if(!params){
+            return false;
+        }
+        if(!params['ttwid']){
+            return false;
+        }
+        if(!params['webid']){
+            return false;
+        }
+        return true;
+    }
+
     async doCallback(doorEntity: DoorEntity<{}>, request?: Request | undefined, response?: Response | undefined): Promise<void> {
             const data = doorEntity.data;
             if (!('status_code' in data) || data['status_code'] != 0){
+                 console.log("dy device collect monitor callback error", data);
                  return;
             }
             const headers = await request?.allHeaders();
             if(!headers){
+                console.log("dy device collect headers error", data);
                 return;
             }
             const uifid = headers['uifid'];
@@ -50,6 +72,7 @@ export class DyDeviceCollectMonitor extends DyMonitorResponse<{}>{
             }
             const urlParams = getUrlParameter(url);
             if(!urlParams){
+                console.log("dy device collect urlParams error", data);
                 return;
             }
             // urlParams 转成json
@@ -66,12 +89,16 @@ export class DyDeviceCollectMonitor extends DyMonitorResponse<{}>{
             const {odinTt, ttwid} = this.getTtwidAndOdinTtFromCookie(cookie);
             urlParamsJson['odin_tt'] = odinTt;
             urlParamsJson['ttwid'] = ttwid;
+            if(!this.validateParams(urlParamsJson)){
+                console.log("dy device collect urlParams error", data);
+                return;
+            }
             await this.saveDevice(urlParamsJson);
     }
 
     async saveDevice(params: {[key: string]: string}){
         const response = await instance.post('/devices/save', params);
-        console.log(response)
+        console.log(this.num, " result is : ", response)
     }
 
     
