@@ -51,7 +51,7 @@ func InitDefaultWebDeviceManager() {
 		defaultWebDeviceManager.ipManager.RegisterObserver(defaultWebDeviceManager)
 
 		// 初始化设备池
-		if err := defaultWebDeviceManager.InitWebDevicePool(context.Background()); err != nil {
+		if err := defaultWebDeviceManager.InitWebDevicePool(); err != nil {
 			log.Printf("Failed to initialize WebDeviceManager: %v", err)
 		}
 	})
@@ -83,7 +83,7 @@ func (m *WebDeviceManager) OnIpUpdate(oldIp, newIp string) {
 }
 
 // InitWebDevicePool 初始化设备池
-func (m *WebDeviceManager) InitWebDevicePool(ctx context.Context) error {
+func (m *WebDeviceManager) InitWebDevicePool() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -94,7 +94,7 @@ func (m *WebDeviceManager) InitWebDevicePool(ctx context.Context) error {
 	}
 
 	// 获取当前索引
-	currentIndex, err := m.getCurrentIndex(ctx)
+	currentIndex, err := m.getCurrentIndex()
 	if err != nil {
 		return fmt.Errorf("get current index error: %v", err)
 	}
@@ -119,15 +119,15 @@ func (m *WebDeviceManager) InitWebDevicePool(ctx context.Context) error {
 }
 
 // GetWebDevice 获取一个可用设备
-func (m *WebDeviceManager) GetWebDevice(ctx context.Context) (*dto.WebDeviceDTO, error) {
+func (m *WebDeviceManager) GetWebDevice() (*dto.WebDeviceDTO, error) {
 	select {
 	case dev := <-m.webDevicePool:
 		// 检查设备是否可用
-		if ok, err := m.checkWebDeviceAvailable(ctx, dev); err != nil {
+		if ok, err := m.checkWebDeviceAvailable(dev); err != nil {
 			return nil, err
 		} else if !ok {
 			// 设备不可用，尝试获取新设备
-			return m.getNewWebDevice(ctx)
+			return m.getNewWebDevice()
 		}
 
 		// 更新设备使用次数
@@ -147,8 +147,8 @@ func (m *WebDeviceManager) GetWebDevice(ctx context.Context) (*dto.WebDeviceDTO,
 
 		return dev, nil
 
-	case <-ctx.Done():
-		return nil, ctx.Err()
+	case <-context.Background().Done():
+		return nil, context.Background().Err()
 	}
 }
 
@@ -174,7 +174,7 @@ func (m *WebDeviceManager) fillWebDeviceDefaultValues(dev *dto.WebDeviceDTO) {
 }
 
 // checkWebDeviceAvailable 检查设备是否可用
-func (m *WebDeviceManager) checkWebDeviceAvailable(ctx context.Context, dev *dto.WebDeviceDTO) (bool, error) {
+func (m *WebDeviceManager) checkWebDeviceAvailable(dev *dto.WebDeviceDTO) (bool, error) {
 	key := fmt.Sprintf("%s_%d", m.webDeviceExpireKey, dev.Id)
 	if !redis.Exists(key) {
 		return true, nil
@@ -193,12 +193,12 @@ func (m *WebDeviceManager) checkWebDeviceAvailable(ctx context.Context, dev *dto
 }
 
 // getNewWebDevice 获取新设备
-func (m *WebDeviceManager) getNewWebDevice(ctx context.Context) (*dto.WebDeviceDTO, error) {
+func (m *WebDeviceManager) getNewWebDevice() (*dto.WebDeviceDTO, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	// 获取当前索引
-	currentIndex, err := m.getCurrentIndex(ctx)
+	currentIndex, err := m.getCurrentIndex()
 	if err != nil {
 		return nil, fmt.Errorf("get current index error: %v", err)
 	}
@@ -224,7 +224,7 @@ func (m *WebDeviceManager) getNewWebDevice(ctx context.Context) (*dto.WebDeviceD
 
 	// 更新当前索引
 	if len(devices) > 0 {
-		err = m.updateCurrentIndex(ctx, int64(devices[len(devices)-1].Id))
+		err = m.updateCurrentIndex(int64(devices[len(devices)-1].Id))
 		if err != nil {
 			return nil, fmt.Errorf("update current index error: %v", err)
 		}
@@ -238,7 +238,7 @@ func (m *WebDeviceManager) getNewWebDevice(ctx context.Context) (*dto.WebDeviceD
 }
 
 // getCurrentIndex 获取当前索引
-func (m *WebDeviceManager) getCurrentIndex(ctx context.Context) (int64, error) {
+func (m *WebDeviceManager) getCurrentIndex() (int64, error) {
 	config, err := m.dictionarySvc.GetByCode("WEB_DEVICE_CURRENT_INDEX")
 	if err != nil {
 		return 0, err
@@ -247,7 +247,7 @@ func (m *WebDeviceManager) getCurrentIndex(ctx context.Context) (int64, error) {
 }
 
 // updateCurrentIndex 更新当前索引
-func (m *WebDeviceManager) updateCurrentIndex(ctx context.Context, index int64) error {
+func (m *WebDeviceManager) updateCurrentIndex(index int64) error {
 	config, err := m.dictionarySvc.GetByCode("WEB_DEVICE_CURRENT_INDEX")
 	if err != nil {
 		return err
