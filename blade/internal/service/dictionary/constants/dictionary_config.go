@@ -89,4 +89,9 @@ var (
 	DEVICE_XHS_CURRENT_INDEX = DictionaryCode{Code: "DEVICE_XHS_CURRENT_INDEX", Desc: "xhs设备当前值"}
 	DEVICE_XHS_ID_RANGE      = DictionaryCode{Code: "DEVICE_XHS_ID_RANGE", Desc: "xhs设备区间"}
 	DEVICE_XHS_FETCH_NUM     = DictionaryCode{Code: "DEVICE_XHS_FETCH_NUM", Desc: "xhs设备使用限制"}
+
+	// Web设备相关配置
+	WEB_DEVICE_CURRENT_INDEX = DictionaryCode{Code: "WEB_DEVICE_CURRENT_INDEX", Desc: "web设备当前值"}
+	WEB_DEVICE_MAX_USE       = DictionaryCode{Code: "WEB_DEVICE_MAX_USE", Desc: "web设备最大使用次数"}
+	WEB_DEVICE_ID_RANGE      = DictionaryCode{Code: "WEB_DEVICE_ID_RANGE", Desc: "web设备一次取的数量"}
 )
