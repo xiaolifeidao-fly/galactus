@@ -1,25 +1,16 @@
 package biz
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"strconv"
 	"sync"
-	"time"
 
 	"galactus/blade/internal/service/device"
 	"galactus/blade/internal/service/device/dto"
 	"galactus/blade/internal/service/dictionary"
 	"galactus/blade/internal/service/dictionary/constants"
 	"galactus/blade/internal/service/ip/biz"
-	"galactus/common/middleware/redis"
-)
-
-const (
-	webDeviceExpireTime = 30 * 60 // 30分钟
-	webDevicePoolKey    = "WEB_DEVICE_POOL"
-	deviceTimeout       = 5 * time.Second // 固定5秒超时
 )
 
 var (
@@ -29,7 +20,10 @@ var (
 
 type WebDeviceManager struct {
 	mu                 sync.Mutex
-	webDevicePool      chan *dto.WebDeviceDTO
+	devices            []*dto.WebDeviceDTO // 设备列表
+	currentIndex       int                 // 当前获取设备的索引
+	currentLoop        int                 // 当前循环次数
+	maxUse             int64               // 设备最大使用次数
 	webDeviceSvc       *device.WebDeviceService
 	dictionarySvc      dictionary.DictionaryService
 	webDeviceExpireKey string
@@ -48,16 +42,33 @@ func (m *WebDeviceManager) getWebDeviceRange() (int64, error) {
 
 // InitDefaultWebDeviceManager 初始化默认的WebDeviceManager实例
 func InitDefaultWebDeviceManager() error {
+	var initErr error
 	webDeviceManagerOnce.Do(func() {
-		// 获取设备范围配置
-		defaultWebDeviceManager = &WebDeviceManager{
-			webDevicePool:      make(chan *dto.WebDeviceDTO, 1000), // 使用固定大小作为channel容量
+		manager := &WebDeviceManager{
+			devices:            make([]*dto.WebDeviceDTO, 0),
+			currentIndex:       0,
+			currentLoop:        0,
 			webDeviceSvc:       device.NewWebDeviceService(),
 			dictionarySvc:      dictionary.NewDictionaryService(),
 			webDeviceExpireKey: "WEB_DEVICE_EXPIRE",
 			ipManager:          biz.GetDefaultIpManager(),
 			deviceIpMap:        make(map[string][]*dto.WebDeviceDTO),
 		}
+
+		// 获取设备最大使用次数配置
+		maxUseConfig, err := manager.dictionarySvc.GetByCode(constants.WEB_DEVICE_MAX_USE.Code)
+		if err != nil {
+			initErr = fmt.Errorf("get web device max use config error: %v", err)
+			return
+		}
+		maxUse, err := strconv.ParseInt(maxUseConfig.Value, 10, 64)
+		if err != nil {
+			initErr = fmt.Errorf("parse max use config error: %v", err)
+			return
+		}
+		manager.maxUse = maxUse
+
+		defaultWebDeviceManager = manager
 		// 注册为IP更新的观察者
 		defaultWebDeviceManager.ipManager.RegisterObserver(defaultWebDeviceManager)
 
@@ -66,7 +77,7 @@ func InitDefaultWebDeviceManager() error {
 			log.Printf("Failed to initialize WebDeviceManager: %v", err)
 		}
 	})
-	return nil
+	return initErr
 }
 
 // GetDefaultWebDeviceManager 获取默认的WebDeviceManager实例
@@ -112,19 +123,28 @@ func (m *WebDeviceManager) InitWebDevicePool() error {
 	}
 
 	// 获取设备列表
-	devices, err := m.webDeviceSvc.GetActiveByRangeId(currentIndex, currentIndex+pageSize)
+	devices, err := m.webDeviceSvc.GetActiveByStartAndLimit(currentIndex, pageSize)
 	if err != nil {
 		return fmt.Errorf("get web devices error: %v", err)
 	}
 
-	// 填充设备池
-	for _, d := range devices {
-		select {
-		case m.webDevicePool <- d:
-		default:
-			// 设备池已满
-			return nil
+	if len(devices) == 0 {
+		//循环重新获取
+		devices, err = m.webDeviceSvc.GetActiveByStartAndLimit(0, pageSize)
+		if err != nil {
+			return fmt.Errorf("get web devices error: %v", err)
 		}
+	}
+
+	if len(devices) > 0 {
+		err = m.updateCurrentIndex(int64(devices[len(devices)-1].Id))
+		if err != nil {
+			return fmt.Errorf("update current index error: %v", err)
+		}
+		// 更新设备列表
+		m.devices = devices
+		m.currentIndex = 0
+		m.currentLoop = 0 // 重置循环次数
 	}
 
 	return nil
@@ -132,103 +152,48 @@ func (m *WebDeviceManager) InitWebDevicePool() error {
 
 // GetWebDevice 获取一个可用设备
 func (m *WebDeviceManager) GetWebDevice() (*dto.WebDeviceDTO, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), deviceTimeout)
-	defer cancel()
-
-	select {
-	case dev := <-m.webDevicePool:
-		// 检查设备是否达到使用上限
-		key := fmt.Sprintf("%s_%d", m.webDeviceExpireKey, dev.Id)
-		count, _ := strconv.ParseInt(redis.Get(key), 10, 64)
-		maxUseConfig, err := m.dictionarySvc.GetByCode(constants.WEB_DEVICE_MAX_USE.Code)
-		if err != nil {
-			return nil, fmt.Errorf("get web device max use config error: %v", err)
+	m.mu.Lock()
+	// 如果没有设备，初始化设备池
+	if len(m.devices) == 0 {
+		m.mu.Unlock()
+		if err := m.InitWebDevicePool(); err != nil {
+			return nil, fmt.Errorf("failed to initialize device pool: %v", err)
 		}
-		maxUse, _ := strconv.ParseInt(maxUseConfig.Value, 10, 64)
-
-		if count >= maxUse {
-			m.mu.Lock()
-			// 清空当前channel
-			for len(m.webDevicePool) > 0 {
-				<-m.webDevicePool
-			}
-
-			// 获取新的一批设备
-			pageSize, err := m.getWebDeviceRange()
-			if err != nil {
-				m.mu.Unlock()
-				return nil, err
-			}
-
-			currentIndex, err := m.getCurrentIndex()
-			if err != nil {
-				m.mu.Unlock()
-				return nil, fmt.Errorf("get current index error: %v", err)
-			}
-
-			// 获取新的设备列表
-			devices, err := m.webDeviceSvc.GetActiveByRangeId(currentIndex, currentIndex+pageSize)
-			if err != nil {
-				m.mu.Unlock()
-				return nil, fmt.Errorf("get web devices error: %v", err)
-			}
-
-			// 如果没有新设备，重置索引并重新获取
-			if len(devices) == 0 {
-				minId, err := m.webDeviceSvc.MinIdByStartIndex(currentIndex)
-				if err != nil {
-					m.mu.Unlock()
-					return nil, fmt.Errorf("get min id error: %v", err)
-				}
-				devices, err = m.webDeviceSvc.GetActiveByRangeId(minId, minId+pageSize)
-				if err != nil {
-					m.mu.Unlock()
-					return nil, fmt.Errorf("get web devices error: %v", err)
-				}
-			}
-
-			// 更新当前索引
-			if len(devices) > 0 {
-				err = m.updateCurrentIndex(int64(devices[len(devices)-1].Id))
-				if err != nil {
-					m.mu.Unlock()
-					return nil, fmt.Errorf("update current index error: %v", err)
-				}
-
-				// 填充新设备到池中
-				for _, d := range devices {
-					m.webDevicePool <- d
-				}
-				m.mu.Unlock()
-
-				// 返回第一个新设备
-				return devices[0], nil
-			}
+		m.mu.Lock()
+		if len(m.devices) == 0 {
 			m.mu.Unlock()
 			return nil, fmt.Errorf("no available web device")
 		}
-
-		// 更新设备使用次数
-		_ = redis.Incr(key)
-		redis.Expire(key, time.Duration(webDeviceExpireTime)*time.Second)
-
-		// 设置默认值
-		m.fillWebDeviceDefaultValues(dev)
-
-		// 将设备放回池中
-		go func() {
-			select {
-			case m.webDevicePool <- dev:
-			case <-ctx.Done():
-				log.Printf("放回设备池超时: %v", ctx.Err())
-			}
-		}()
-
-		return dev, nil
-
-	case <-ctx.Done():
-		return nil, fmt.Errorf("获取设备超时: %v", ctx.Err())
 	}
+
+	// 如果已经遍历完所有设备
+	if m.currentIndex >= len(m.devices) {
+		m.currentIndex = 0 // 重置索引
+		m.currentLoop++    // 增加循环次数
+
+		// 如果已经达到最大循环次数，重新获取设备列表
+		if m.currentLoop >= int(m.maxUse) {
+			m.mu.Unlock()
+			if err := m.InitWebDevicePool(); err != nil {
+				return nil, fmt.Errorf("failed to reinitialize device pool: %v", err)
+			}
+			m.mu.Lock()
+			if len(m.devices) == 0 {
+				m.mu.Unlock()
+				return nil, fmt.Errorf("no available web device")
+			}
+		}
+	}
+
+	// 获取当前设备
+	dev := m.devices[m.currentIndex]
+	m.currentIndex++
+	m.mu.Unlock()
+
+	// 设置默认值
+	m.fillWebDeviceDefaultValues(dev)
+
+	return dev, nil
 }
 
 // fillWebDeviceDefaultValues 填充设备默认值
@@ -263,81 +228,11 @@ func (m *WebDeviceManager) getCurrentIndex() (int64, error) {
 
 // updateCurrentIndex 更新当前索引
 func (m *WebDeviceManager) updateCurrentIndex(index int64) error {
-	config, err := m.dictionarySvc.GetByCode("WEB_DEVICE_CURRENT_INDEX")
+	config, err := m.dictionarySvc.GetByCode(constants.WEB_DEVICE_CURRENT_INDEX.Code)
 	if err != nil {
 		return err
 	}
 
 	config.Value = strconv.FormatInt(index, 10)
 	return m.dictionarySvc.Save(config)
-}
-
-// checkWebDeviceAvailable 检查设备是否可用
-func (m *WebDeviceManager) checkWebDeviceAvailable(dev *dto.WebDeviceDTO) (bool, error) {
-	key := fmt.Sprintf("%s_%d", m.webDeviceExpireKey, dev.Id)
-	if !redis.Exists(key) {
-		return true, nil
-	}
-
-	count, _ := strconv.ParseInt(redis.Get(key), 10, 64)
-
-	// 获取设备最大使用次数
-	maxUseConfig, err := m.dictionarySvc.GetByCode(constants.WEB_DEVICE_MAX_USE.Code)
-	if err != nil {
-		return false, fmt.Errorf("get web device max use config error: %v", err)
-	}
-
-	maxUse, _ := strconv.ParseInt(maxUseConfig.Value, 10, 64)
-	return count < maxUse, nil
-}
-
-// getNewWebDevice 获取新设备
-func (m *WebDeviceManager) getNewWebDevice() (*dto.WebDeviceDTO, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	// 获取设备范围
-	pageSize, err := m.getWebDeviceRange()
-	if err != nil {
-		return nil, err
-	}
-
-	// 获取当前索引
-	currentIndex, err := m.getCurrentIndex()
-	if err != nil {
-		return nil, fmt.Errorf("get current index error: %v", err)
-	}
-
-	// 获取新的设备列表
-	devices, err := m.webDeviceSvc.GetActiveByRangeId(currentIndex, currentIndex+pageSize)
-	if err != nil {
-		return nil, fmt.Errorf("get web devices error: %v", err)
-	}
-
-	if len(devices) == 0 {
-		// 如果没有新设备，重置索引
-		minId, err := m.webDeviceSvc.MinIdByStartIndex(currentIndex)
-		if err != nil {
-			return nil, fmt.Errorf("get min id error: %v", err)
-		}
-
-		devices, err = m.webDeviceSvc.GetActiveByRangeId(minId, minId+pageSize)
-		if err != nil {
-			return nil, fmt.Errorf("get web devices error: %v", err)
-		}
-	}
-
-	// 更新当前索引
-	if len(devices) > 0 {
-		err = m.updateCurrentIndex(int64(devices[len(devices)-1].Id))
-		if err != nil {
-			return nil, fmt.Errorf("update current index error: %v", err)
-		}
-	}
-
-	if len(devices) == 0 {
-		return nil, fmt.Errorf("no available web device")
-	}
-
-	return devices[0], nil
 }

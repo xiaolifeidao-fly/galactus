@@ -68,8 +68,8 @@ func (r *WebDeviceRepository) GetByWebid(webid string) (*WebDevice, error) {
 	return r.GetOne("select * from web_device where webid = ? and active = 1", webid)
 }
 
-func (r *WebDeviceRepository) GetActiveByRangeId(startIndex, endIndex int64) ([]*WebDevice, error) {
-	return r.GetList("select * from web_device where id >= ? and id < ? and active = ?", startIndex, endIndex, true)
+func (r *WebDeviceRepository) GetActiveByStartAndLimit(startIndex, limit int64) ([]*WebDevice, error) {
+	return r.GetList("select * from web_device where id > ? and active = ? limit ?", startIndex, true, limit)
 }
 
 func (r *WebDeviceRepository) MinIdByStartIndex(startIndex int64) (int64, error) {

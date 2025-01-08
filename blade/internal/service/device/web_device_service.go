@@ -37,8 +37,8 @@ func (s *WebDeviceService) GetById(id uint) (*dto.WebDeviceDTO, error) {
 }
 
 // GetActiveByRangeId 获取指定范围内的活跃设备
-func (s *WebDeviceService) GetActiveByRangeId(startIndex, endIndex int64) ([]*dto.WebDeviceDTO, error) {
-	devices, err := s.webDeviceRepository.GetActiveByRangeId(startIndex, endIndex)
+func (s *WebDeviceService) GetActiveByStartAndLimit(startIndex, limit int64) ([]*dto.WebDeviceDTO, error) {
+	devices, err := s.webDeviceRepository.GetActiveByStartAndLimit(startIndex, limit)
 	if err != nil {
 		return nil, err
 	}

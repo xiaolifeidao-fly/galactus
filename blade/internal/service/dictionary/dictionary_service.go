@@ -33,12 +33,7 @@ func (s *dictionaryService) GetByCode(code string) (*dto.DictionaryDTO, error) {
 	if dict == nil {
 		return nil, errors.New("not found")
 	}
-	return &dto.DictionaryDTO{
-		Code:        dict.Code,
-		Value:       dict.Value,
-		Description: dict.Description,
-		Type:        dict.Type,
-	}, nil
+	return db.ToDTO[dto.DictionaryDTO](dict), nil
 }
 
 // GetByType 根据类型获取字典列表
@@ -47,26 +42,17 @@ func (s *dictionaryService) GetByType(typeStr string) ([]dto.DictionaryDTO, erro
 	if err != nil {
 		return nil, err
 	}
-	result := make([]dto.DictionaryDTO, len(dicts))
-	for i, dict := range dicts {
-		result[i] = dto.DictionaryDTO{
-			Code:        dict.Code,
-			Value:       dict.Value,
-			Description: dict.Description,
-			Type:        dict.Type,
-		}
+	dtoList := db.ToDTOs[dto.DictionaryDTO](dicts)
+	result := make([]dto.DictionaryDTO, len(dtoList))
+	for i, dto := range dtoList {
+		result[i] = *dto
 	}
 	return result, nil
 }
 
 // Save 保存字典
 func (s *dictionaryService) Save(dictDTO *dto.DictionaryDTO) error {
-	dict := &repository.Dictionary{
-		Code:        dictDTO.Code,
-		Value:       dictDTO.Value,
-		Description: dictDTO.Description,
-		Type:        dictDTO.Type,
-	}
+	dict := db.ToPO[repository.Dictionary](dictDTO)
 	_, err := s.repo.SaveOrUpdate(dict)
 	return err
 }
