@@ -90,19 +90,19 @@ func GetDefaultWebDeviceManager() *WebDeviceManager {
 
 // OnIpUpdate 实现IP更新的观察者接口
 func (m *WebDeviceManager) OnIpUpdate(oldIp, newIp string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	// m.mu.Lock()
+	// defer m.mu.Unlock()
 
-	// 查找使用旧IP的设备
-	if devices, ok := m.deviceIpMap[oldIp]; ok {
-		// 更新这些设备的IP
-		for _, dev := range devices {
-			dev.ProxyIp = newIp
-		}
-		// 更新映射关系
-		delete(m.deviceIpMap, oldIp)
-		m.deviceIpMap[newIp] = devices
-	}
+	// // 查找使用旧IP的设备
+	// if devices, ok := m.deviceIpMap[oldIp]; ok {
+	// 	// 更新这些设备的IP
+	// 	for _, dev := range devices {
+	// 		dev.ProxyIp = newIp
+	// 	}
+	// 	// 更新映射关系
+	// 	delete(m.deviceIpMap, oldIp)
+	// 	m.deviceIpMap[newIp] = devices
+	// }
 }
 
 // InitWebDevicePool 初始化设备池

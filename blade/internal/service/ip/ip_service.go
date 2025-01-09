@@ -25,6 +25,15 @@ func (s *IpService) GetProxyIpsByType(proxyType string) ([]*dto.ProxyIpDTO, erro
 	return db.ToDTOs[dto.ProxyIpDTO](proxyIps), nil
 }
 
+// GetAllProxyIps 获取所有代理IP
+func (s *IpService) GetAllProxyIps() ([]*dto.ProxyIpDTO, error) {
+	proxyIps, err := s.ipRepository.FindAll()
+	if err != nil {
+		return nil, err
+	}
+	return db.ToDTOs[dto.ProxyIpDTO](proxyIps), nil
+}
+
 // SaveOrUpdateProxyIp 保存或更新代理IP
 func (s *IpService) SaveOrUpdateProxyIp(proxyIpDTO *dto.ProxyIpDTO) (*dto.ProxyIpDTO, error) {
 	proxyIp := db.ToPO[repository.ProxyIp](proxyIpDTO)

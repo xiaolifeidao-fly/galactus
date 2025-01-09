@@ -2,6 +2,7 @@ package biz
 
 import (
 	"errors"
+	"fmt"
 	"galactus/blade/internal/service/ip"
 	"galactus/blade/internal/service/ip/dto"
 	"log"
@@ -13,6 +14,7 @@ import (
 var (
 	defaultIpInstance *IpManager
 	ipManagerOnce     sync.Once
+	maxRetries        = 3 // 最大重试次数
 )
 
 // IpObserver 定义IP更新的观察者接口
@@ -35,6 +37,7 @@ func GetDefaultIpManager() *IpManager {
 			defaultIpInstance = &IpManager{
 				baseService: ip.NewIpService(),
 				observers:   make([]IpObserver, 0),
+				ipNum:       0, //这里每次取值0 默认去取最大数量的ip
 			}
 		}
 	})
@@ -48,14 +51,13 @@ func InitIpManager() error {
 }
 
 func (s *IpManager) InitIp() error {
-	proxyIps, err := s.baseService.GetProxyIpsByType("FINISH_QUERY")
+	proxyIps, err := s.baseService.GetAllProxyIps()
 	if err != nil || len(proxyIps) == 0 {
 		log.Printf("not found ip config")
 		return nil
 	}
 
 	s.ipEntities = proxyIps
-	s.ipNum = len(s.ipEntities)
 	return nil
 }
 
@@ -71,22 +73,63 @@ func (s *IpManager) GetIp() (*dto.ProxyIpDTO, error) {
 }
 
 func (s *IpManager) getIpDTO() (*dto.ProxyIpDTO, error) {
-	randomIndex := s.getRandomIndex()
-	if randomIndex == -1 {
-		return nil, errors.New("no available IP")
-	}
-	ipDTO := s.ipEntities[randomIndex]
-	now := time.Now()
-
-	if ipDTO.ExpireTime.Before(now) {
-		// Update IP logic here
-		newIp, err := ip.GetDefaultZDYHttpProxyService().GetUserIpByProxyType(s.ipNum)
-		if err != nil {
-			return nil, err
+	retryCount := 0
+	for {
+		if retryCount >= maxRetries {
+			return nil, errors.New("exceeded maximum retry attempts to get valid IP")
 		}
-		s.updateIp(ipDTO, newIp)
+
+		if len(s.ipEntities) == 0 {
+			// 如果没有可用IP，重新获取新的IP列表
+			proxyIPs, err := ip.GetDefaultZDYHttpProxyService().GetUserIpByProxyType(s.ipNum)
+			if err != nil {
+				retryCount++
+				log.Printf("failed to get IPs from ZDY service, retry %d/%d: %v", retryCount, maxRetries, err)
+				continue
+			}
+
+			// 将新的IP列表转换为DTO并保存
+			for _, proxyIP := range proxyIPs {
+				ipDTO := &dto.ProxyIpDTO{
+					Ip:         proxyIP.IP + ":" + fmt.Sprint(proxyIP.Port),
+					ExpireTime: time.Now().Add(time.Duration(proxyIP.Timeout) * time.Second),
+				}
+				savedDTO, err := s.baseService.SaveOrUpdateProxyIp(ipDTO)
+				if err != nil {
+					log.Printf("failed to save proxy IP: %v", err)
+					continue
+				}
+				s.ipEntities = append(s.ipEntities, savedDTO)
+			}
+
+			if len(s.ipEntities) == 0 {
+				retryCount++
+				log.Printf("no valid IPs saved, retry %d/%d", retryCount, maxRetries)
+				continue
+			}
+		}
+
+		randomIndex := s.getRandomIndex()
+		if randomIndex == -1 {
+			retryCount++
+			continue
+		}
+
+		ipDTO := s.ipEntities[randomIndex]
+		now := time.Now()
+
+		if ipDTO.ExpireTime.Before(now) {
+			// 从数据库中删除过期IP
+			if err := s.baseService.DeleteProxyIp(int64(ipDTO.Id)); err != nil {
+				log.Printf("failed to delete expired IP from database: %v", err)
+			}
+			// 从内存中移除过期的IP
+			s.ipEntities = append(s.ipEntities[:randomIndex], s.ipEntities[randomIndex+1:]...)
+			continue // 继续循环尝试下一个IP
+		}
+
+		return ipDTO, nil
 	}
-	return ipDTO, nil
 }
 
 // RegisterObserver 注册观察者
@@ -101,21 +144,6 @@ func (s *IpManager) notifyObservers(oldIp, newIp string) {
 	for _, observer := range s.observers {
 		go observer.OnIpUpdate(oldIp, newIp)
 	}
-}
-
-func (s *IpManager) updateIp(ipDTO *dto.ProxyIpDTO, newIp map[string]interface{}) {
-	oldIp := ipDTO.Ip
-	ipDTO.Ip = newIp["ip"].(string) + ":" + newIp["port"].(string)
-	ipDTO.ExpireTime = newIp["expireTime"].(time.Time)
-	// Save updated IP back to the repository
-	_, err := s.baseService.SaveOrUpdateProxyIp(ipDTO)
-	if err != nil {
-		log.Printf("update ip failed: %v", err)
-		return
-	}
-
-	// 通知观察者IP已更新
-	s.notifyObservers(oldIp, ipDTO.Ip)
 }
 
 func (s *IpManager) getRandomIndex() int {

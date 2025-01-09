@@ -3,7 +3,6 @@ package initialization
 import (
 	"fmt"
 	deviceBiz "galactus/blade/internal/service/device/biz"
-	"galactus/blade/internal/service/ip"
 	ipBiz "galactus/blade/internal/service/ip/biz"
 	"galactus/blade/routers"
 	"galactus/common/middleware/db"
@@ -19,7 +18,6 @@ const (
 	ConfigInit InitOrder = iota
 	DBInit
 	RedisInit
-	ProxyServiceInit
 	IpManagerInit
 	DeviceManagerInit
 	RouterInit
@@ -55,16 +53,6 @@ var initializers = []Initializer{
 			redisAddr := vipper.GetString("redis.addr")
 			redisPwd := vipper.GetString("redis.password")
 			return redis.InitRedisClient(redisAddr, redisPwd)
-		},
-	},
-	{
-		Order: ProxyServiceInit,
-		Name:  "ZDY Proxy Service",
-		InitFn: func() error {
-			zdyUrl := vipper.GetString("zdy.url")
-			zdyKey := vipper.GetString("zdy.key")
-			zdyApi := vipper.GetString("zdy.api")
-			return ip.InitDefaultZDYHttpProxyService(zdyUrl, zdyKey, zdyApi)
 		},
 	},
 	{
