@@ -10,7 +10,7 @@ import (
 type DictionaryService interface {
 	GetByCode(code string) (*dto.DictionaryDTO, error)
 	GetByType(typeStr string) ([]dto.DictionaryDTO, error)
-	Save(dictDTO *dto.DictionaryDTO) error
+	SaveOrUpdate(dictDTO *dto.DictionaryDTO) error
 	Delete(id int64) error
 }
 
@@ -51,7 +51,7 @@ func (s *dictionaryService) GetByType(typeStr string) ([]dto.DictionaryDTO, erro
 }
 
 // Save 保存字典
-func (s *dictionaryService) Save(dictDTO *dto.DictionaryDTO) error {
+func (s *dictionaryService) SaveOrUpdate(dictDTO *dto.DictionaryDTO) error {
 	dict := db.ToPO[repository.Dictionary](dictDTO)
 	_, err := s.repo.SaveOrUpdate(dict)
 	return err

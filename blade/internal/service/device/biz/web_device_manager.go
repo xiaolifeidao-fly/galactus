@@ -11,6 +11,7 @@ import (
 	"galactus/blade/internal/service/dictionary"
 	"galactus/blade/internal/service/dictionary/constants"
 	"galactus/blade/internal/service/ip/biz"
+	"galactus/common/middleware/vipper"
 )
 
 var (
@@ -205,16 +206,19 @@ func (m *WebDeviceManager) fillWebDeviceDefaultValues(dev *dto.WebDeviceDTO) {
 		dev.UserAgent = ""
 	}
 
-	// 设置IP
-	if dev.ProxyIp == "" {
-		if ipDTO, err := m.ipManager.GetIp(); err == nil {
-			dev.ProxyIp = ipDTO.Ip
-			// 记录IP和设备的关系
-			m.mu.Lock()
-			m.deviceIpMap[ipDTO.Ip] = append(m.deviceIpMap[ipDTO.Ip], dev)
-			m.mu.Unlock()
+	if vipper.GetBool("proxy.enable") {
+		// 设置IP
+		if dev.ProxyIp == "" {
+			if ipDTO, err := m.ipManager.GetIp(); err == nil {
+				dev.ProxyIp = ipDTO.Ip
+				// 记录IP和设备的关系
+				m.mu.Lock()
+				m.deviceIpMap[ipDTO.Ip] = append(m.deviceIpMap[ipDTO.Ip], dev)
+				m.mu.Unlock()
+			}
 		}
 	}
+
 }
 
 // getCurrentIndex 获取当前索引
@@ -234,5 +238,5 @@ func (m *WebDeviceManager) updateCurrentIndex(index int64) error {
 	}
 
 	config.Value = strconv.FormatInt(index, 10)
-	return m.dictionarySvc.Save(config)
+	return m.dictionarySvc.SaveOrUpdate(config)
 }

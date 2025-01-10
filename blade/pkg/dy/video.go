@@ -44,7 +44,9 @@ func (h *VideoHandler) convertByVideoUrl(context *gin.Context) {
 
 func (h *VideoHandler) getVideoInfo(context *gin.Context) {
 	videoId := context.Query("videoId")
-	webDeviceDTO, _ := h.WebDeviceService.GetById(107)
+	//webDeviceDTO, _ := h.WebDeviceService.GetById(107)
+	//webDeviceDTO, _ := biz.GetDefaultWebDeviceManager().GetWebDevice()
+	webDeviceDTO, _ := h.GetWebDevice()
 	if webDeviceDTO == nil {
 		routers.ToJson(context, nil, errors.New("webDeviceDTO is nil"))
 		return

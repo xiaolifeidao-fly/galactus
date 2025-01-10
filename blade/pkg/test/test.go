@@ -28,6 +28,7 @@ func (h *TestHandler) RegisterHandler(engine *gin.RouterGroup) {
 }
 
 func (h *TestHandler) getDevice(context *gin.Context) {
-	device, err := h.webDeviceManager.GetWebDevice()
+	//device, err := h.webDeviceManager.GetWebDevice()
+	device, err := biz.GetDefaultWebDeviceManager().GetWebDevice()
 	routers.ToJson(context, device, err)
 }
