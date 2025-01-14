@@ -36,13 +36,13 @@ func GetDefaultZDYHttpProxyService() *ZDYHttpProxyService {
 func (s *ZDYHttpProxyService) GetUserIpByProxyType(fetchNum int) ([]ProxyIP, error) {
 	var url string
 	if fetchNum > 0 {
-		url = fmt.Sprintf("%s?api=%s&akey=%s&pro=1&order=1&type=3&count=%d",
+		url = fmt.Sprintf("%s?api=%s&akey=%s&count=%d&fitter=2&timespan=6&tunnel=1&type=3",
 			vipper.GetString("zdy.url"),
 			vipper.GetString("zdy.api"),
 			vipper.GetString("zdy.key"),
 			fetchNum)
 	} else {
-		url = fmt.Sprintf("%s?api=%s&akey=%s&pro=1&order=1&type=3",
+		url = fmt.Sprintf("%s?api=%s&akey=%s&fitter=2&timespan=6&tunnel=1&type=3",
 			vipper.GetString("zdy.url"),
 			vipper.GetString("zdy.api"),
 			vipper.GetString("zdy.key"))

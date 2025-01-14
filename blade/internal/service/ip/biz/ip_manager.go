@@ -37,7 +37,7 @@ func GetDefaultIpManager() *IpManager {
 			defaultIpInstance = &IpManager{
 				baseService: ip.NewIpService(),
 				observers:   make([]IpObserver, 0),
-				ipNum:       0, //这里每次取值0 默认去取最大数量的ip
+				ipNum:       10, //每次拿10个ip
 			}
 		}
 	})
@@ -92,7 +92,7 @@ func (s *IpManager) getIpDTO() (*dto.ProxyIpDTO, error) {
 			for _, proxyIP := range proxyIPs {
 				ipDTO := &dto.ProxyIpDTO{
 					Ip:         proxyIP.IP + ":" + fmt.Sprint(proxyIP.Port),
-					ExpireTime: time.Now().Add(time.Duration(proxyIP.Timeout) * time.Second),
+					ExpireTime: time.Now().Add(1 * time.Minute), // 设置固定5分钟失效时间
 				}
 				savedDTO, err := s.baseService.SaveOrUpdateProxyIp(ipDTO)
 				if err != nil {
