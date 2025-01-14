@@ -92,7 +92,7 @@ func (s *IpManager) getIpDTO() (*dto.ProxyIpDTO, error) {
 			for _, proxyIP := range proxyIPs {
 				ipDTO := &dto.ProxyIpDTO{
 					Ip:         proxyIP.IP + ":" + fmt.Sprint(proxyIP.Port),
-					ExpireTime: time.Now().Add(1 * time.Minute), // 设置固定5分钟失效时间
+					ExpireTime: time.Now().Add(5 * time.Minute), // 设置固定5分钟失效时间
 				}
 				savedDTO, err := s.baseService.SaveOrUpdateProxyIp(ipDTO)
 				if err != nil {
