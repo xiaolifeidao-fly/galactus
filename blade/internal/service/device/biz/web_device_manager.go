@@ -211,6 +211,7 @@ func (m *WebDeviceManager) fillWebDeviceDefaultValues(dev *dto.WebDeviceDTO) {
 		if dev.ProxyIp == "" {
 			if ipDTO, err := m.ipManager.GetIp(); err == nil {
 				dev.ProxyIp = ipDTO.Ip
+				dev.ExpireTime = ipDTO.ExpireTime
 				// 记录IP和设备的关系
 				m.mu.Lock()
 				m.deviceIpMap[ipDTO.Ip] = append(m.deviceIpMap[ipDTO.Ip], dev)
