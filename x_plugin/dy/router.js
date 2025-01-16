@@ -1,6 +1,6 @@
 const {use} = require("./application")
 
-const aBogus = require('./a_bogus')
+const aBogus = require('./a_bogus_192')
 const sign = require('./sign')
 
 
@@ -19,7 +19,7 @@ function getAbogus(req, res){
     const params = body['params'];
     console.log("req.body    ", body);
     const ua = body['ua'];
-    var data = aBogus.generate_a_bogus(params, ua);
+    var data = aBogus.getAbogus(params, ua);
     console.log("data    ", data);
     res.send({"aBogus":data});
 }

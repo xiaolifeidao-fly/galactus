@@ -58,6 +58,10 @@ export abstract class Monitor<T = any> {
         return await this.isMatch(url, method, headers);
     }
 
+    async filter(url : string, resourceType : string, method: string, headers: {[key: string]: string;}){
+        return false;
+    }
+
     abstract isMatch(url: string, method: string, headers: {[key: string]: string;}): Promise<boolean>;  
 
     setFinishTag(finishTag: boolean){
@@ -125,6 +129,10 @@ export abstract class Monitor<T = any> {
         return await this.waitPromise;
     }
 
+    isWait(){
+        return true;
+    }
+
 }
 
 export abstract class MonitorRequest<T> extends Monitor<T> {
@@ -190,6 +198,9 @@ export abstract class MonitorChain<T> {
         const doorData: {[key: string]: any} = {};
         let result = true;
         for(let monitor of this.monitors){
+            if (!monitor.isWait()){
+                continue;
+            }
             const doorEntity = await monitor.waitForAction();
             if(!doorEntity.code){
                 result = false;

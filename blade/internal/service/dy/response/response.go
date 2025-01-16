@@ -39,3 +39,13 @@ type ConvertUrlItemDTO struct {
 	UidType string `json:"uidType"`
 	Uid     string `json:"uid"`
 }
+
+type ExtItemListDTO struct {
+	BaseItem
+	Property    map[string]interface{} `json:"property"`
+	Data        map[string]*ExtItemDTO `json:"data"`
+	TotalNum    int                    `json:"totalNum"`
+	NextIndex   int64                  `json:"nextIndex"`
+	HadMore     bool                   `json:"hadMore"`
+	HotSoonFlag int                    `json:"hotSoonFlag"`
+}

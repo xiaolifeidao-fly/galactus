@@ -1,0 +1,103 @@
+syntax = "proto3";
+package pb;
+option go_package = "./;pb";  //这里容易踩坑
+
+message TokenReq_4{
+  TokenReq_4_1 p_1 = 1;
+  string p_2 = 2;
+  string p_3 = 3;
+  string p_4 = 4;
+  uint64 p_5 = 5;
+  string p_6 = 6;
+  string p_7 = 7;
+  string p_8 = 8;
+  string p_9 = 9;
+  uint64 p_10 = 10;
+  uint64 p_11 = 11;
+  string p_12 = 12;
+  uint64 p_16 = 16;
+}
+message TokenReq_4_1{
+  string p_1 = 1;
+  string p_2 = 2;
+  string p_3 = 3;
+  string p_4 = 4;
+  string p_5 = 5;
+  string p_6 = 6;
+  string p_7 = 7;
+  uint64 p_8 = 8;
+  string p_9 = 9;
+  uint64 p_10 = 10;
+  uint64 p_11 = 11;
+  string p_12 = 12;
+  uint64 p_13 = 13;
+  uint64 p_14 = 14;
+  uint64 p_15 = 15;
+  uint64 p_16 = 16;
+  uint64 p_17 = 17;
+  uint64 p_18 = 18;
+  string p_20 = 20;
+  string p_21 = 21;
+  string p_22 = 22;
+  string p_23 = 23;
+  string p_24 = 24;
+  uint64 p_25 = 25;
+  string p_26 = 26;
+  uint64 p_27 = 27;
+  string p_28 = 28;
+  uint64 p_29 = 29;
+  uint64 p_30 = 30;
+  string p_31 = 31;
+  string p_32 = 32;
+  string p_33 = 33;
+  string p_34 = 34;
+  string p_35 = 35;
+  string p_38 = 38;
+  string p_39 = 39;
+  uint64 p_40 = 40;
+  uint64 p_42 = 42;
+  uint64 p_43 = 43;
+  string p_44 = 44;
+  uint64 p_45 = 45;
+  uint64 p_46 = 46;
+  string p_47 = 47;
+  uint64 p_48 = 48;
+  uint64 p_49 = 49;
+  string p_50 = 50;
+  uint64 p_51 = 51;
+  uint64 p_52 = 52;
+  string p_53 = 53;
+  string p_54 = 54;
+  string p_55 = 55;
+  uint64 p_56 = 56;
+}
+message TokenReq{
+  uint64 p_1 = 1;
+  uint64 p_2 = 2;
+  uint64 p_3 = 3;
+  bytes p_4 = 4;
+  uint64 p_5 = 5;
+}
+message TokenReq_Res{
+  uint64 p_1 = 1;
+  uint64 p_2 = 2;
+  uint64 p_3 = 3;
+  TokenReq_4 p_4 = 4;
+  uint64 p_5 = 5;
+}
+message TokenRes{
+  uint64 p_1 = 1;
+  uint64 p_2 = 2;
+  uint64 p_5 = 5;
+  bytes  p_6 = 6;
+}
+message TokenRes_6{
+  string p_1 = 1;
+  uint64 p_2 = 2;
+}
+message TokenRes_Res{
+  uint64 p_1 = 1;
+  uint64 p_2 = 2;
+  uint64 p_5 = 5;
+  TokenRes_6  p_6 = 6;
+}

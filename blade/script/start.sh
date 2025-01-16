@@ -1,1 +1,1 @@
-./blade
+nohup ./blade > server.log 2>&1 &

@@ -46,6 +46,9 @@ func getVideoShortUrlStr(shortUrl string, videoInfo *VideoInfo) string {
 	if err != nil {
 		return ""
 	}
+	if _, ok := shortUrlResponse["code"]; !ok {
+		return ""
+	}
 	code := shortUrlResponse["code"].(float64)
 	if code != 0 {
 		return ""
@@ -90,6 +93,10 @@ func GetVideoItemInfo(videoInfo *VideoInfo) *dto.ExtItemDTO {
 	extItem.DataStatus = response.ERROR
 	videoResponse, err := GetVideoInfo(videoInfo)
 	if err != nil {
+		return extItem
+	}
+	if _, ok := videoResponse["status_code"]; !ok {
+		extItem.DataStatus = response.NOT_GET_DATA
 		return extItem
 	}
 	statusCode := videoResponse["status_code"].(float64)

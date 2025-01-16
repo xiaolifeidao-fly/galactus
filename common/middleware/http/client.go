@@ -24,6 +24,7 @@ func InitHttpClient(ip string) *http.Client {
 	if ip != "" {
 		transport.Proxy = http.ProxyURL(&url.URL{Host: ip})
 	}
+	// transport.Proxy = http.ProxyURL(&url.URL{Host: "127.0.0.1:8888"})
 
 	client := &http.Client{
 		Transport: transport,

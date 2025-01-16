@@ -1,0 +1,33 @@
+syntax = "proto3";
+package pb;
+option go_package = "./;pb";
+
+message XArgusV15{
+  uint64 unknown_1 = 1;
+  uint64 unknown_2 = 2;
+  uint64 unknown_3 = 3;
+}
+
+message XArgus{
+  uint64 magic = 1;
+  uint64 version = 2;
+  uint64 random = 3;
+  string appid = 4;
+  string devices_id = 5;
+  string license = 6;
+  string app_version = 7;
+  string sdk_version_str = 8;
+  uint64 sdk_version = 9;
+  bytes env = 10;
+  uint64 platform = 11;
+  uint64 create_time = 12;
+  bytes body_hsh = 13;
+  bytes query_hash = 14;
+  XArgusV15 action_info = 15;
+  string devices_token = 16;
+  uint64 is_license = 17;
+  bytes client_key_md5 = 18;
+  bytes query_sm3 = 19;
+  string psk = 20;
+  uint64 call_type = 21;
+}

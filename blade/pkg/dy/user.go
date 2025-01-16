@@ -1,6 +1,7 @@
 package dy
 
 import (
+	"galactus/blade/internal/service/device"
 	"galactus/blade/internal/service/device/biz"
 	"galactus/blade/internal/service/dy"
 	"galactus/blade/internal/service/dy/dto"
@@ -18,11 +19,13 @@ import (
 type UserHandler struct {
 	*routers.BaseHandler
 	*biz.WebDeviceManager
+	WebDeviceService *device.WebDeviceService
 }
 
 func NewUserHandler() *UserHandler {
 	return &UserHandler{
 		WebDeviceManager: biz.GetDefaultWebDeviceManager(),
+		WebDeviceService: device.NewWebDeviceService(),
 	}
 }
 
@@ -71,8 +74,8 @@ func (h *UserHandler) getUserFavoriteBySecUid(context *gin.Context) {
 		MinCursor:    minCursor,
 		Count:        count,
 	}
-	result, err := dy.GetUserFavoriteByWeb(userFavoriteEntity)
-	routers.ToJson(context, result, err)
+	result := dy.GetUserFavorite(userFavoriteEntity)
+	routers.ToJson(context, result, nil)
 }
 
 func (h *UserHandler) getUserFollowingBySecUid(context *gin.Context) {

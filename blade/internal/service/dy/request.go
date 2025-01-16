@@ -92,10 +92,10 @@ func (e *DyBaseEntity) GetHeaders() map[string]string {
 
 func (e *DyBaseEntity) GetCommonParams() map[string]interface{} {
 	return map[string]interface{}{
-		"device_platform":     e.WebDevice.DevicePlatform,
-		"aid":                 e.WebDevice.Aid,
-		"channel":             e.WebDevice.Channel,
-		"source":              e.WebDevice.Source,
+		"device_platform": e.WebDevice.DevicePlatform,
+		"aid":             e.WebDevice.Aid,
+		"channel":         e.WebDevice.Channel,
+		// "source":              e.WebDevice.Source,
 		"update_version_code": e.WebDevice.UpdateVersionCode,
 		"pc_client_type":      e.WebDevice.PcClientType,
 		"pc_libra_divert":     e.WebDevice.PcLibraDivert,
@@ -121,9 +121,9 @@ func (e *DyBaseEntity) GetCommonParams() map[string]interface{} {
 		"round_trip_time":     e.WebDevice.RoundTripTime,
 		"webid":               e.WebDevice.Webid,
 		"uifid":               e.WebDevice.Uifid,
-		"verify_fp":           e.WebDevice.VerifyFp,
+		"verifyFp":            e.WebDevice.VerifyFp,
 		"fp":                  e.WebDevice.Fp,
-		"msToken":             e.getMsToken(107),
+		"msToken":             e.getMsToken(185),
 	}
 }
 

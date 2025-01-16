@@ -70,6 +70,8 @@ export class DyDeviceCollectMonitor extends DyMonitorResponse<{}>{
             if(!url){
                 return;
             }
+            console.log("dy device collect url is ", url);
+            console.log("dy device collect headers is ", headers);
             const urlParams = getUrlParameter(url);
             if(!urlParams){
                 console.log("dy device collect urlParams error", data);

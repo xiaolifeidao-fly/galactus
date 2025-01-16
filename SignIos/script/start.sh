@@ -1,0 +1,1 @@
+nohup ./SignIos > server.log 2>&1 &

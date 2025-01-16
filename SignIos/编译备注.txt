@@ -1,0 +1,6 @@
+编译命令：
+go build main.go
+
+
+执行命令：
+go run main.go

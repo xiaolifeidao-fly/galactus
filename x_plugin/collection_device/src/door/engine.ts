@@ -61,7 +61,7 @@ export abstract class DoorEngine<T = any> {
         if(url){
             await page.goto(url);
         }
-        console.log("new context and new page ")
+        
         this.onRequest(page);
         this.onResponse(page);
         this.page = page;
@@ -85,14 +85,24 @@ export abstract class DoorEngine<T = any> {
     }
 
 
-    public async doBeforeRequest(request: Request, headers: { [key: string]: string; }){
+    public async doBeforeRequest(router : Route, request: Request, headers: { [key: string]: string; }){
+        let isFilter = false;
         for(const monitor of this.monitors){
-            if(monitor.finishTag){
-                continue;
-            }
+           
             if(!(monitor instanceof MonitorRequest)){
                 continue;
             }
+
+            if(await monitor.filter(request.url(), request.resourceType(), request.method(), headers)){
+                await router.abort();
+                console.log("filter request ", request.url());
+                isFilter = true;
+                continue;
+            }
+            if(monitor.finishTag){
+                continue;
+            }
+
             if(!await monitor.isMatch(request.url(), request.method(), headers)){
                 continue;
             }
@@ -104,6 +114,7 @@ export abstract class DoorEngine<T = any> {
             monitor._doCallback(new DoorEntity(data ? true : false, data));
             monitor.setFinishTag(true);
         }
+        return isFilter;
     }
 
     public async onRequest(page : Page){
@@ -111,7 +122,10 @@ export abstract class DoorEngine<T = any> {
             // 获取请求对象
             const request = router.request();
             const headers = await request.allHeaders();
-            await this.doBeforeRequest(request, headers);
+            const isFilter = await this.doBeforeRequest(router, request, headers);
+            if(isFilter){
+                return;
+            }
             router.continue();
         });
     }
@@ -142,6 +156,12 @@ export abstract class DoorEngine<T = any> {
     }
 
     public async openWaitMonitor(page : Page,  url: string, monitor : Monitor<T | any>, headers: Record<string, string> = {}){
+        await this.openMonitor(page, url, monitor, headers);
+        const doorEntity = await monitor.waitForAction();
+        return doorEntity;
+    }
+
+    public async openMonitor(page : Page,  url: string, monitor : Monitor<T | any>, headers: Record<string, string> = {}){
         try{
             this.addMonitor(monitor);
             await this.startMonitor();
@@ -149,17 +169,14 @@ export abstract class DoorEngine<T = any> {
         }catch(e){
             console.error("openWaitMonitor error", e);
         }
-        const doorEntity = await monitor.waitForAction();
-        return doorEntity;
     }
-
 
 
     public async openWaitMonitorChain(page : Page,  url: string, monitorChain: MonitorChain<T | any>, headers: Record<string, string> = {}){
         try{
             this.addMonitorChain(monitorChain);
             await this.startMonitor();
-            page.goto(url, { timeout: 5000});
+            await page.goto(url, { timeout: 5000});
         }catch(e){
             console.error("openWaitMonitorChain error", e);
         }
@@ -255,9 +272,7 @@ export abstract class DoorEngine<T = any> {
         if(!this.browser){
             return;
         }
-        const macbook = devices['MacBook Pro 16'];
         const context = await this.browser?.newContext({
-            ...macbook,
             bypassCSP: true,
             userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36', 
             extraHTTPHeaders: {
@@ -269,10 +284,9 @@ export abstract class DoorEngine<T = any> {
             // proxy: {
             //     server: 'http://127.0.0.1:8888',
             // },
-            viewport: { width: 1920, height: 1080 }
+            viewport: { width: 800, height: 1080 }
         });
 
-        // 注入脚本来修改 navigator 信息
         await context.addInitScript(() => {
             // 模拟不同的 navigator 信息
             //@ts-ignore    
@@ -288,6 +302,17 @@ export abstract class DoorEngine<T = any> {
             get: () => '5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
             });
         });
+
+        await context.addInitScript(() => {
+            //@ts-ignore
+            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+
+          });
+          if(){
+            Array.isArray(v) && v.length == 3 && Array.isArray(v[0]) && typeof(v[1]) == 'function' && v[2] == 'msToken' 
+
+          }
+         
         return context;
     }
 
@@ -303,6 +328,7 @@ export abstract class DoorEngine<T = any> {
             headless: this.headless,
             executablePath: this.chromePath,
             args: [
+                '--disable-accelerated-2d-canvas', '--disable-webgl', '--disable-software-rasterizer',
                 '--no-sandbox', // 取消沙箱，某些网站可能会检测到沙箱模式
                 '--disable-setuid-sandbox',
                 '--disable-blink-features=AutomationControlled',  // 禁用浏览器自动化控制特性
