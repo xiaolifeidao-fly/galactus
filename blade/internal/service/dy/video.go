@@ -1,60 +1,18 @@
 package dy
 
 import (
-	"fmt"
 	"galactus/blade/internal/service/dy/response"
 	dto "galactus/blade/internal/service/dy/response"
 	"galactus/common/middleware/http"
 	"galactus/common/utils"
 	"log"
-	"net/url"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type VideoInfo struct {
 	*DyBaseEntity
 	VideoId string
-}
-
-func GetVideoShorUrl(shareUrl string, videoInfo *VideoInfo) (map[string]any, error) {
-	requestUrl := "https://www.douyin.com/aweme/v1/web/web_shorten/?"
-	ts := time.Now().Unix()
-	parsedURL, err := url.Parse(shareUrl)
-	if err != nil {
-		fmt.Println("Error parsing URL:", err)
-		return nil, err
-	}
-	// 获取查询参数
-	queryParams := parsedURL.Query()
-	// 修改查询参数 (替换 'query' 参数的值)
-	queryParams.Set("ts", strconv.FormatInt(ts, 10))
-	// 将修改后的查询参数重新赋值给 URL
-	parsedURL.RawQuery = queryParams.Encode()
-	shareUrl = parsedURL.String()
-	videoInfo.Init(requestUrl)
-	videoInfo.
-		AppendUrlParams("target", url.QueryEscape(shareUrl)).
-		AppendUrlParams("belong", "aweme").
-		AppendUrlParams("persist", "1")
-	return DoGet(videoInfo)
-}
-
-func getVideoShortUrlStr(shortUrl string, videoInfo *VideoInfo) string {
-	shortUrlResponse, err := GetVideoShorUrl(shortUrl, videoInfo)
-	if err != nil {
-		return ""
-	}
-	if _, ok := shortUrlResponse["code"]; !ok {
-		return ""
-	}
-	code := shortUrlResponse["code"].(float64)
-	if code != 0 {
-		return ""
-	}
-	shortUrl = shortUrlResponse["data"].(string)
-	return shortUrl
 }
 
 func GetVideoInfo(videoInfo *VideoInfo) (map[string]any, error) {
@@ -140,7 +98,7 @@ func GetVideoItemInfo(videoInfo *VideoInfo) *dto.ExtItemDTO {
 		extItem.ExtParams = map[string]interface{}{
 			"secUid":   anchorInfoMap["sec_uid"].(string),
 			"assistId": extItem.Uid,
-			"shortUrl": getVideoShortUrlStr(shareUrl.(string), videoInfo),
+			"shortUrl": GetShortUrlStr("video", shareUrl.(string), videoInfo.DyBaseEntity),
 			"shareUrl": shareUrl,
 			"hsFlag":   false,
 		}
@@ -165,7 +123,7 @@ func ConvertByVideoUrl(businessKey string, ip string) *response.ConvertItemDTO {
 			defer response.Body.Close()
 			businessKey = response.Request.URL.String()
 		}
-		if strings.Contains(businessKey, "www.douyin.com") {
+		if strings.Contains(businessKey, "www.douyin.com") || strings.Contains(businessKey, "www.iesdouyin.com") {
 			start := strings.Index(businessKey, typeValue)
 			end := strings.Index(businessKey, "?")
 			if start == -1 {

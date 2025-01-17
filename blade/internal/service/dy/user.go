@@ -2,12 +2,28 @@ package dy
 
 import (
 	"galactus/blade/internal/service/dy/response"
+	dto "galactus/blade/internal/service/dy/response"
+	"galactus/common/middleware/http"
+	"galactus/common/utils"
+	"strconv"
 	"strings"
 )
 
 type UserInfoEntity struct {
 	*DyBaseEntity
-	SecUid string
+	BusinessId   string
+	BusinessType string
+}
+
+func getSecUidByVideoId(videoId string, userInfoEntity *UserInfoEntity) *dto.ExtItemDTO {
+	videoInfo := &VideoInfo{
+		DyBaseEntity: &DyBaseEntity{
+			WebDevice: userInfoEntity.WebDevice,
+			Ip:        userInfoEntity.Ip,
+		},
+		VideoId: videoId,
+	}
+	return GetVideoItemInfo(videoInfo)
 }
 
 func GetUserInfoByWeb(userInfoEntity *UserInfoEntity) (map[string]interface{}, error) {
@@ -15,7 +31,7 @@ func GetUserInfoByWeb(userInfoEntity *UserInfoEntity) (map[string]interface{}, e
 	userInfoEntity.Init(url)
 	userInfoEntity.
 		AppendUrlParams("land_to", "1").
-		AppendUrlParams("sec_user_id", userInfoEntity.SecUid).
+		AppendUrlParams("sec_user_id", userInfoEntity.BusinessId).
 		AppendUrlParams("publish_video_strategy_type", "2").
 		AppendUrlParams("personal_center_strategy", "1")
 	return DoGet(userInfoEntity)
@@ -24,6 +40,16 @@ func GetUserInfoByWeb(userInfoEntity *UserInfoEntity) (map[string]interface{}, e
 func GetUserInfo(userInfoEntity *UserInfoEntity) *response.ExtItemDTO {
 	userInfoDTO := &response.ExtItemDTO{}
 	userInfoDTO.DataStatus = response.ERROR
+	secUid := userInfoEntity.BusinessId
+	if userInfoEntity.BusinessType == "video" {
+		extItemDTO := getSecUidByVideoId(userInfoEntity.BusinessId, userInfoEntity)
+		if extItemDTO.DataStatus == dto.DELETE {
+			userInfoDTO.DataStatus = dto.DELETE
+			return userInfoDTO
+		}
+		secUid = extItemDTO.ExtParams["secUid"].(string)
+	}
+	userInfoEntity.BusinessId = secUid
 	userInfo, err := GetUserInfoByWeb(userInfoEntity)
 	if err != nil {
 		return userInfoDTO
@@ -36,11 +62,33 @@ func GetUserInfo(userInfoEntity *UserInfoEntity) *response.ExtItemDTO {
 	if statusCode != 0 {
 		return userInfoDTO
 	}
-	
-	userInfoDTO.BusinessId = userInfo["secUid"].(string)
-	userInfoDTO.ExtParams["uid"] = userInfo["uid"].(string)
+	userInfoDTO.BusinessId = secUid
+	userInfoMap := userInfo["user"].(map[string]any)
+	shareUrl := getShareUrl(userInfoMap)
+	userInfoDTO.ExtParams = map[string]interface{}{
+		"url":      "https://www.douyin.com/user/" + secUid,
+		"assistId": userInfoMap["uid"].(string),
+		"shortUrl": GetShortUrlStr("user", shareUrl, userInfoEntity.DyBaseEntity),
+		"shareUrl": shareUrl,
+		"hsFlag":   false,
+	}
+	userInfoDTO.Uid = userInfoMap["uid"].(string)
+	nickname := userInfoMap["nickname"].(string)
+	userInfoDTO.Name = utils.RemoveEmojis(nickname)
+	userInfoDTO.NowNum = int64(userInfoMap["mplatform_followers_count"].(float64))
 	userInfoDTO.DataStatus = response.SUCCESS
 	return userInfoDTO
+}
+
+func getShareUrl(userInfoMap map[string]any) string {
+	if userInfoMap["share_info"] == nil {
+		return ""
+	}
+	shareInfo := userInfoMap["share_info"].(map[string]any)
+	if shareInfo["share_url"] == nil {
+		return ""
+	}
+	return shareInfo["share_url"].(string)
 }
 
 type UserFavoriteEntity struct {
@@ -138,7 +186,7 @@ func getUid(uidType string, url string, userInfoEntity *UserInfoEntity) string {
 		startIndex := strings.Index(url, "user/")
 		endIndex := len(url)
 		secUid := url[startIndex+5 : endIndex]
-		userInfoEntity.SecUid = secUid
+		userInfoEntity.BusinessId = secUid
 		userInfo, err := GetUserInfoByWeb(userInfoEntity)
 		if err != nil {
 			return ""
@@ -192,4 +240,56 @@ func GetUrlByUrl(url string, userInfoEntity *UserInfoEntity) *response.ConvertUr
 	convertUrlItemDTO.Uid = uid
 	convertUrlItemDTO.DataStatus = response.SUCCESS
 	return convertUrlItemDTO
+}
+
+func ConvertByUserUrl(businessKey string, ip string) *response.ConvertItemDTO {
+	convertItemDTO := &response.ConvertItemDTO{}
+	convertItemDTO.DataStatus = response.ERROR
+	typeValue := "video/"
+	if strings.HasPrefix(businessKey, "http") {
+		if strings.Contains(businessKey, "v.douyin.com") {
+			headers := map[string]string{
+				"Referer":    "https://www.douyin.com",
+				"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+			}
+			response, err := http.GetToResponse(businessKey, "", headers, ip)
+			if err != nil {
+				return convertItemDTO
+			}
+			defer response.Body.Close()
+			businessKey = response.Request.URL.String()
+		}
+		if strings.Contains(businessKey, "www.douyin.com") || strings.Contains(businessKey, "www.iesdouyin.com") {
+			start := strings.Index(businessKey, typeValue)
+			end := strings.Index(businessKey, "?")
+			if start == -1 {
+				typeValue = "user/"
+				start = strings.Index(businessKey, typeValue)
+				if start == -1 {
+					convertItemDTO.DataStatus = dto.DELETE
+					return convertItemDTO
+				}
+			}
+			if end == -1 {
+				end = len(businessKey)
+			}
+			businessKey = businessKey[start+len(typeValue) : end]
+		}
+	}
+	convertItemDTO.ConvertValue = businessKey
+	extParams := map[string]interface{}{}
+	businessType := "user"
+	if typeValue == "video/" {
+		businessType = "video"
+		extParams["videoUrl"] = "https://www.douyin.com/video/" + businessKey
+		_, err := strconv.ParseUint(businessKey, 10, 64)
+		if err != nil {
+			convertItemDTO.DataStatus = dto.DELETE
+			return convertItemDTO
+		}
+	}
+	extParams["businessType"] = businessType
+	convertItemDTO.Property = extParams
+	convertItemDTO.DataStatus = dto.SUCCESS
+	return convertItemDTO
 }

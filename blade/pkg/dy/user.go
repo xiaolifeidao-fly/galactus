@@ -34,7 +34,14 @@ func (h *UserHandler) RegisterHandler(engine *gin.RouterGroup) {
 	engine.GET("/dy/user/favorites", h.getUserFavoriteBySecUid)
 	engine.GET("/dy/user/following", h.getUserFollowingBySecUid)
 	engine.GET("/dy/user/convertUidByUrl", h.convertUidByUrl)
+	engine.GET("/dy/user/convert", h.convert)
+}
 
+func (h *UserHandler) convert(context *gin.Context) {
+	businessKey := context.Query("businessKey")
+	ip := "" //TODO 获取IP
+	result := dy.ConvertByUserUrl(businessKey, ip)
+	routers.ToJson(context, result, nil)
 }
 
 func (h *UserHandler) convertUidByUrl(context *gin.Context) {
@@ -49,15 +56,17 @@ func (h *UserHandler) convertUidByUrl(context *gin.Context) {
 }
 
 func (h *UserHandler) getUserBySecUid(context *gin.Context) {
-	secUid := context.Query("secUid")
+	businessId := context.Query("businessId")
+	businessType := context.Query("businessType")
 	webDeviceDTO, _ := h.GetWebDevice()
 	ip := "" //TODO 获取IP
 	userInfo := &dy.UserInfoEntity{
 		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),
-		SecUid:       secUid,
+		BusinessId:   businessId,
+		BusinessType: businessType,
 	}
-	result, err := dy.GetUserInfoByWeb(userInfo)
-	routers.ToJson(context, result, err)
+	result := dy.GetUserInfo(userInfo)
+	routers.ToJson(context, result, nil)
 }
 
 func (h *UserHandler) getUserFavoriteBySecUid(context *gin.Context) {
