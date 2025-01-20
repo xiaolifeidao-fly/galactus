@@ -70,6 +70,7 @@ func GetUserInfo(userInfoEntity *UserInfoEntity) *response.ExtItemDTO {
 		"assistId": userInfoMap["uid"].(string),
 		"shortUrl": GetShortUrlStr("user", shareUrl, userInfoEntity.DyBaseEntity),
 		"shareUrl": shareUrl,
+		"secUid":   secUid,
 		"hsFlag":   false,
 	}
 	userInfoDTO.Uid = userInfoMap["uid"].(string)

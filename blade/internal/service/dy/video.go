@@ -54,6 +54,7 @@ func GetVideoItemInfo(videoInfo *VideoInfo) *dto.ExtItemDTO {
 		return extItem
 	}
 	if _, ok := videoResponse["status_code"]; !ok {
+		log.Println("video not get data ", " videoId ", videoInfo.VideoId, " device id is ", videoInfo.WebDevice.Id)
 		extItem.DataStatus = response.NOT_GET_DATA
 		return extItem
 	}

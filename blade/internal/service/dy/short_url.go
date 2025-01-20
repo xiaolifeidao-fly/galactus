@@ -46,11 +46,12 @@ func GetShortUrlStr(shareType string, shareUrl string, entity *DyBaseEntity) str
 	}
 	code := shortUrlResponse["code"].(float64)
 	if code != 0 {
+		log.Println("short url code is ", code, " shareUrl ", shareUrl, " device id is ", entity.WebDevice.Id)
 		return ""
 	}
 	if _, ok := shortUrlResponse["message"]; ok {
 		if shortUrlResponse["message"].(string) == "error" {
-			log.Println("short url message is ", shortUrlResponse["message"])
+			log.Println("short url message is ", " shareUrl ", shareUrl, " device id is ", entity.WebDevice.Id)
 			return ""
 		}
 	}
