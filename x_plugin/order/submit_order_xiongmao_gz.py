@@ -2,7 +2,7 @@ import time
 import requests
 
 def get_task_xiongmao():
-    url = "http://112.74.176.127:8020/studio/api/task/get?key=AKID5af7bb633ff38158e8587d0b8cfcbfa6&type=gz&uid=4358060915864643&sec_uid=MS4wLjABAAAAIL3rVTcL76atlBoKdLiExLSD6qLxEaq0xbN2jGy8u6vysn1IPW7qgR5gKxmGf1lA&filter=video&platform=dy"
+    url = "http://112.74.176.127:8020/studio/api/task/get?key=AKID5af7bb633ff38158e8587d0b8cfcbfa6&type=gz&uid=4358060915864643&sec_uid=MS4wLjABAAAAIL3rVTcL76atlBoKdLiExLSD6qLxEaq0xbN2jGy8u6vysn1IPW7qgR5gKxmGf1lA&platform=dy"
     bgResponse = requests.get(url)
     task_data = bgResponse.json()
     print(task_data)
