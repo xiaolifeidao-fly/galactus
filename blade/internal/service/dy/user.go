@@ -41,7 +41,7 @@ func GetUserInfo(userInfoEntity *UserInfoEntity) *response.ExtItemDTO {
 	userInfoDTO := &response.ExtItemDTO{}
 	userInfoDTO.DataStatus = response.ERROR
 	secUid := userInfoEntity.BusinessId
-	if userInfoEntity.BusinessType == "video" {
+	if userInfoEntity.BusinessType == "video" || userInfoEntity.BusinessType == "note" {
 		extItemDTO := getSecUidByVideoId(userInfoEntity.BusinessId, userInfoEntity)
 		if extItemDTO.DataStatus == dto.DELETE {
 			userInfoDTO.DataStatus = dto.DELETE
@@ -267,8 +267,12 @@ func ConvertByUserUrl(businessKey string, ip string) *response.ConvertItemDTO {
 				typeValue = "user/"
 				start = strings.Index(businessKey, typeValue)
 				if start == -1 {
-					convertItemDTO.DataStatus = dto.DELETE
-					return convertItemDTO
+					typeValue = "note/"
+					start = strings.Index(businessKey, typeValue)
+					if start == -1 {
+						convertItemDTO.DataStatus = dto.DELETE
+						return convertItemDTO
+					}
 				}
 			}
 			if end == -1 {
@@ -288,6 +292,9 @@ func ConvertByUserUrl(businessKey string, ip string) *response.ConvertItemDTO {
 			convertItemDTO.DataStatus = dto.DELETE
 			return convertItemDTO
 		}
+	} else if typeValue == "note/" {
+		businessType = "note"
+		extParams["videoUrl"] = "https://www.douyin.com/note/" + businessKey
 	}
 	extParams["businessType"] = businessType
 	convertItemDTO.Property = extParams
