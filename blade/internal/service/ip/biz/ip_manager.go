@@ -3,6 +3,7 @@ package biz
 import (
 	"errors"
 	"fmt"
+	"galactus/blade/internal/consts"
 	"galactus/blade/internal/service/ip"
 	"galactus/blade/internal/service/ip/dto"
 	"log"
@@ -23,11 +24,12 @@ type IpObserver interface {
 }
 
 type IpManager struct {
-	ipEntities  []*dto.ProxyIpDTO
-	ipNum       int
-	mu          sync.Mutex
-	baseService *ip.IpService
-	observers   []IpObserver
+	// 使用 map 存储不同场景的 IP 列表
+	ipEntitiesMap map[consts.Scene][]*dto.ProxyIpDTO
+	ipNum         int
+	mu            sync.Mutex
+	baseService   *ip.IpService
+	observers     []IpObserver
 }
 
 // GetDefaultIpManager 只负责获取实例，不负责初始化数据
@@ -35,9 +37,10 @@ func GetDefaultIpManager() *IpManager {
 	ipManagerOnce.Do(func() {
 		if defaultIpInstance == nil {
 			defaultIpInstance = &IpManager{
-				baseService: ip.NewIpService(),
-				observers:   make([]IpObserver, 0),
-				ipNum:       10, //每次拿10个ip
+				baseService:   ip.NewIpService(),
+				observers:     make([]IpObserver, 0),
+				ipNum:         10,
+				ipEntitiesMap: make(map[consts.Scene][]*dto.ProxyIpDTO),
 			}
 		}
 	})
@@ -57,75 +60,104 @@ func (s *IpManager) InitIp() error {
 		return nil
 	}
 
-	s.ipEntities = proxyIps
-	return nil
-}
-
-func (s *IpManager) GetIp() (*dto.ProxyIpDTO, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	ipDTO, err := s.getIpDTO()
+	// 初始化map
+	s.ipEntitiesMap = make(map[consts.Scene][]*dto.ProxyIpDTO)
+
+	// 根据Type将IP分配到对应的场景
+	for _, ip := range proxyIps {
+		// 遍历所有场景，找到匹配的场景
+		for _, scene := range []consts.Scene{
+			consts.SceneCollectDevice,
+			consts.SceneAuditLike,
+			consts.SceneCurrentValue,
+			consts.SceneAuditFollow,
+		} {
+			if ip.Type == scene.GetSceneName() {
+				s.ipEntitiesMap[scene] = append(s.ipEntitiesMap[scene], ip)
+				break
+			}
+		}
+	}
+	return nil
+}
+
+func (s *IpManager) GetIp(scene consts.Scene) (*dto.ProxyIpDTO, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	ipDTO, err := s.getIpDTO(scene)
 	if err != nil {
 		return nil, err
 	}
 	return ipDTO, nil
 }
 
-func (s *IpManager) getIpDTO() (*dto.ProxyIpDTO, error) {
+func (s *IpManager) getIpDTO(scene consts.Scene) (*dto.ProxyIpDTO, error) {
 	retryCount := 0
 	for {
 		if retryCount >= maxRetries {
 			return nil, errors.New("exceeded maximum retry attempts to get valid IP")
 		}
 
-		if len(s.ipEntities) == 0 {
-			// 如果没有可用IP，重新获取新的IP列表
-			proxyIPs, err := ip.GetDefaultZDYHttpProxyService().GetUserIpByProxyType(s.ipNum)
+		// 获取指定场景的 IP 列表
+		ipEntities, exists := s.ipEntitiesMap[scene]
+		if !exists {
+			s.ipEntitiesMap[scene] = make([]*dto.ProxyIpDTO, 0)
+			ipEntities = s.ipEntitiesMap[scene]
+		}
+
+		if len(ipEntities) == 0 {
+			// 获取新的 IP 列表
+			proxyIPs, err := ip.GetDefaultZDYHttpProxyService().GetUserIpByProxyType(scene, s.ipNum)
 			if err != nil {
 				retryCount++
-				log.Printf("failed to get IPs from ZDY service, retry %d/%d: %v", retryCount, maxRetries, err)
+				log.Printf("failed to get IPs from ZDY service for scene %v, retry %d/%d: %v",
+					scene, retryCount, maxRetries, err)
 				continue
 			}
 
-			// 将新的IP列表转换为DTO并保存
+			// 保存新的 IP 列表
+			newIpEntities := make([]*dto.ProxyIpDTO, 0, len(proxyIPs))
 			for _, proxyIP := range proxyIPs {
 				ipDTO := &dto.ProxyIpDTO{
 					Ip:         proxyIP.IP + ":" + fmt.Sprint(proxyIP.Port),
-					ExpireTime: time.Now().Add(5 * time.Minute), // 设置固定5分钟失效时间
+					ExpireTime: time.Now().Add(time.Duration(proxyIP.Timeout) * time.Second),
+					Type:       scene.GetSceneName(),
 				}
 				savedDTO, err := s.baseService.SaveOrUpdateProxyIp(ipDTO)
 				if err != nil {
 					log.Printf("failed to save proxy IP: %v", err)
 					continue
 				}
-				s.ipEntities = append(s.ipEntities, savedDTO)
+				newIpEntities = append(newIpEntities, savedDTO)
 			}
 
-			if len(s.ipEntities) == 0 {
+			if len(newIpEntities) == 0 {
 				retryCount++
-				log.Printf("no valid IPs saved, retry %d/%d", retryCount, maxRetries)
+				log.Printf("no valid IPs saved for scene %v, retry %d/%d", scene, retryCount, maxRetries)
 				continue
 			}
+
+			s.ipEntitiesMap[scene] = newIpEntities
+			ipEntities = newIpEntities
 		}
 
-		randomIndex := s.getRandomIndex()
-		if randomIndex == -1 {
-			retryCount++
-			continue
-		}
-
-		ipDTO := s.ipEntities[randomIndex]
+		// 从当前场景的 IP 列表中随机选择一个
+		randomIndex := rand.Intn(len(ipEntities))
+		ipDTO := ipEntities[randomIndex]
 		now := time.Now()
 
 		if ipDTO.ExpireTime.Before(now) {
-			// 从数据库中删除过期IP
+			// 删除过期的 IP
 			if err := s.baseService.DeleteProxyIp(int64(ipDTO.Id)); err != nil {
 				log.Printf("failed to delete expired IP from database: %v", err)
 			}
-			// 从内存中移除过期的IP
-			s.ipEntities = append(s.ipEntities[:randomIndex], s.ipEntities[randomIndex+1:]...)
-			continue // 继续循环尝试下一个IP
+			// 从内存中移除过期的 IP
+			s.ipEntitiesMap[scene] = append(ipEntities[:randomIndex], ipEntities[randomIndex+1:]...)
+			continue
 		}
 
 		return ipDTO, nil
@@ -144,12 +176,4 @@ func (s *IpManager) notifyObservers(oldIp, newIp string) {
 	for _, observer := range s.observers {
 		go observer.OnIpUpdate(oldIp, newIp)
 	}
-}
-
-func (s *IpManager) getRandomIndex() int {
-	ipSize := len(s.ipEntities)
-	if ipSize == 0 {
-		return -1
-	}
-	return rand.Intn(ipSize)
 }

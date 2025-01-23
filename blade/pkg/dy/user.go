@@ -1,6 +1,7 @@
 package dy
 
 import (
+	"galactus/blade/internal/consts"
 	"galactus/blade/internal/service/device"
 	"galactus/blade/internal/service/device/biz"
 	"galactus/blade/internal/service/dy"
@@ -46,7 +47,7 @@ func (h *UserHandler) convert(context *gin.Context) {
 
 func (h *UserHandler) convertUidByUrl(context *gin.Context) {
 	url := context.Query("url")
-	webDeviceDTO, _ := h.GetWebDevice()
+	webDeviceDTO, _ := h.GetWebDevice(consts.SceneAuditLike)
 	ip := "" //TODO 获取IP
 	userInfoEntity := &dy.UserInfoEntity{
 		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),
@@ -58,7 +59,7 @@ func (h *UserHandler) convertUidByUrl(context *gin.Context) {
 func (h *UserHandler) getUserBySecUid(context *gin.Context) {
 	businessId := context.Query("businessId")
 	businessType := context.Query("businessType")
-	webDeviceDTO, _ := h.GetWebDevice()
+	webDeviceDTO, _ := h.GetWebDevice(consts.SceneAuditLike)
 	ip := "" //TODO 获取IP
 	userInfo := &dy.UserInfoEntity{
 		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),
@@ -74,7 +75,7 @@ func (h *UserHandler) getUserFavoriteBySecUid(context *gin.Context) {
 	maxCursor, _ := strconv.Atoi(context.Query("maxCursor"))
 	minCursor, _ := strconv.Atoi(context.Query("minCursor"))
 	count, _ := strconv.Atoi(context.Query("count"))
-	webDeviceDTO, _ := h.GetWebDevice()
+	webDeviceDTO, _ := h.GetWebDevice(consts.SceneAuditLike)
 	ip := "" //TODO 获取IP
 	userFavoriteEntity := &dy.UserFavoriteEntity{
 		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),
@@ -91,7 +92,7 @@ func (h *UserHandler) getUserFollowingBySecUid(context *gin.Context) {
 	secUid := context.Query("secUid")
 	offset, _ := strconv.Atoi(context.Query("offset"))
 	userId := context.Query("userId")
-	webDeviceDTO, _ := h.GetWebDevice()
+	webDeviceDTO, _ := h.GetWebDevice(consts.SceneAuditLike)
 	ip := "" //TODO 获取IP
 	userFollowingEntity := &dy.UserFollowingEntity{
 		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),

@@ -7,7 +7,8 @@ import (
 	"net/http"
 	"sync"
 
-	"galactus/common/middleware/vipper"
+	"galactus/blade/internal/consts"
+	"galactus/blade/internal/service/dictionary"
 )
 
 // ProxyIP 代理IP信息
@@ -19,7 +20,9 @@ type ProxyIP struct {
 	Cometime int    `json:"cometime"`
 }
 
-type ZDYHttpProxyService struct{}
+type ZDYHttpProxyService struct {
+	DictionaryService dictionary.DictionaryService
+}
 
 var (
 	defaultZDYInstance *ZDYHttpProxyService
@@ -28,24 +31,39 @@ var (
 
 func GetDefaultZDYHttpProxyService() *ZDYHttpProxyService {
 	zdyOnce.Do(func() {
-		defaultZDYInstance = &ZDYHttpProxyService{}
+		defaultZDYInstance = &ZDYHttpProxyService{
+			DictionaryService: dictionary.NewDictionaryService(),
+		}
 	})
 	return defaultZDYInstance
 }
 
-func (s *ZDYHttpProxyService) GetUserIpByProxyType(fetchNum int) ([]ProxyIP, error) {
+func (s *ZDYHttpProxyService) GetUserIpByProxyType(scene consts.Scene, fetchNum int) ([]ProxyIP, error) {
 	var url string
+	proxyUrl, err := s.DictionaryService.GetByCode(scene.GetProxyRequestUrl())
+	if err != nil {
+		return nil, err
+	}
+	proxyApi, err := s.DictionaryService.GetByCode(scene.GetProxyRequestApi())
+	if err != nil {
+		return nil, err
+	}
+	proxyAkey, err := s.DictionaryService.GetByCode(scene.GetProxyRequestAkey())
+	if err != nil {
+		return nil, err
+	}
+
 	if fetchNum > 0 {
-		url = fmt.Sprintf("%s?api=%s&akey=%s&count=%d&fitter=2&timespan=6&tunnel=1&type=3",
-			vipper.GetString("zdy.url"),
-			vipper.GetString("zdy.api"),
-			vipper.GetString("zdy.key"),
+		url = fmt.Sprintf("%s?api=%s&akey=%s&count=%d&pro=1&order=2&type=3",
+			proxyUrl.Value,
+			proxyApi.Value,
+			proxyAkey.Value,
 			fetchNum)
 	} else {
-		url = fmt.Sprintf("%s?api=%s&akey=%s&fitter=2&timespan=6&tunnel=1&type=3",
-			vipper.GetString("zdy.url"),
-			vipper.GetString("zdy.api"),
-			vipper.GetString("zdy.key"))
+		url = fmt.Sprintf("%s?api=%s&akey=%s&pro=1&order=2&type=3",
+			proxyUrl.Value,
+			proxyApi.Value,
+			proxyAkey.Value)
 	}
 
 	resp, err := http.Get(url)

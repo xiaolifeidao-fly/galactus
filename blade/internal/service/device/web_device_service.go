@@ -45,6 +45,15 @@ func (s *WebDeviceService) GetActiveByStartAndLimit(startIndex, limit int64) ([]
 	return db.ToDTOs[dto.WebDeviceDTO](devices), nil
 }
 
+// GetActiveByStartAndLimitWithRange 获取指定范围内的活跃设备，并限制ID范围
+func (s *WebDeviceService) GetActiveByStartAndLimitWithRange(startIndex, limit, maxId int64) ([]*dto.WebDeviceDTO, error) {
+	devices, err := s.webDeviceRepository.GetActiveByStartAndLimitWithRange(startIndex, limit, maxId)
+	if err != nil {
+		return nil, err
+	}
+	return db.ToDTOs[dto.WebDeviceDTO](devices), nil
+}
+
 // MinIdByStartIndex 获取起始索引之后的最小ID
 func (s *WebDeviceService) MinIdByStartIndex(startIndex int64) (int64, error) {
 	return s.webDeviceRepository.MinIdByStartIndex(startIndex)

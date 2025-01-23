@@ -83,3 +83,9 @@ func (r *WebDeviceRepository) MinIdByStartIndex(startIndex int64) (int64, error)
 func (r *WebDeviceRepository) GetByUdIdAndOpenUdIdAndSerial(udId, openUdId, serial string) (*WebDevice, error) {
 	return r.GetOne("select * from web_device where ud_id = ? and open_ud_id = ? and serial = ? and active = 1", udId, openUdId, serial)
 }
+
+// GetActiveByStartAndLimitWithRange 获取指定范围内的活跃设备，并限制ID范围
+func (r *WebDeviceRepository) GetActiveByStartAndLimitWithRange(startIndex, limit, maxId int64) ([]*WebDevice, error) {
+	return r.GetList("select * from web_device where id > ? and id <= ? and active = ? limit ?",
+		startIndex, maxId, true, limit)
+}
