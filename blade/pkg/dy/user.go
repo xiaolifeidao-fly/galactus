@@ -6,6 +6,7 @@ import (
 	"galactus/blade/internal/service/device/biz"
 	"galactus/blade/internal/service/dy"
 	"galactus/blade/internal/service/dy/dto"
+	ip "galactus/blade/internal/service/ip/biz"
 	"strconv"
 
 	"galactus/common/middleware/routers"
@@ -21,12 +22,14 @@ type UserHandler struct {
 	*routers.BaseHandler
 	*biz.WebDeviceManager
 	WebDeviceService *device.WebDeviceService
+	IpManager        *ip.IpManager
 }
 
 func NewUserHandler() *UserHandler {
 	return &UserHandler{
 		WebDeviceManager: biz.GetDefaultWebDeviceManager(),
 		WebDeviceService: device.NewWebDeviceService(),
+		IpManager:        ip.GetDefaultIpManager(),
 	}
 }
 
@@ -40,17 +43,33 @@ func (h *UserHandler) RegisterHandler(engine *gin.RouterGroup) {
 
 func (h *UserHandler) convert(context *gin.Context) {
 	businessKey := context.Query("businessKey")
-	ip := "" //TODO 获取IP
-	result := dy.ConvertByUserUrl(businessKey, ip)
+	ip, err := h.IpManager.GetIp(consts.SceneCurrentValue)
+	if err != nil {
+		routers.ToJson(context, nil, err)
+		return
+	}
+	ipStr := ""
+	if ip != nil {
+		ipStr = ip.Ip
+	}
+	result := dy.ConvertByUserUrl(businessKey, ipStr)
 	routers.ToJson(context, result, nil)
 }
 
 func (h *UserHandler) convertUidByUrl(context *gin.Context) {
 	url := context.Query("url")
 	webDeviceDTO, _ := h.GetWebDevice(consts.SceneAuditLike)
-	ip := "" //TODO 获取IP
+	ip, err := h.IpManager.GetIp(consts.SceneCurrentValue)
+	if err != nil {
+		routers.ToJson(context, nil, err)
+		return
+	}
+	ipStr := ""
+	if ip != nil {
+		ipStr = ip.Ip
+	}
 	userInfoEntity := &dy.UserInfoEntity{
-		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),
+		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ipStr),
 	}
 	result := dy.GetUrlByUrl(url, userInfoEntity)
 	routers.ToJson(context, result, nil)
@@ -60,9 +79,17 @@ func (h *UserHandler) getUserBySecUid(context *gin.Context) {
 	businessId := context.Query("businessId")
 	businessType := context.Query("businessType")
 	webDeviceDTO, _ := h.GetWebDevice(consts.SceneAuditLike)
-	ip := "" //TODO 获取IP
+	ip, err := h.IpManager.GetIp(consts.SceneCurrentValue)
+	if err != nil {
+		routers.ToJson(context, nil, err)
+		return
+	}
+	ipStr := ""
+	if ip != nil {
+		ipStr = ip.Ip
+	}
 	userInfo := &dy.UserInfoEntity{
-		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),
+		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ipStr),
 		BusinessId:   businessId,
 		BusinessType: businessType,
 	}
@@ -76,9 +103,17 @@ func (h *UserHandler) getUserFavoriteBySecUid(context *gin.Context) {
 	minCursor, _ := strconv.Atoi(context.Query("minCursor"))
 	count, _ := strconv.Atoi(context.Query("count"))
 	webDeviceDTO, _ := h.GetWebDevice(consts.SceneAuditLike)
-	ip := "" //TODO 获取IP
+	ip, err := h.IpManager.GetIp(consts.SceneCurrentValue)
+	if err != nil {
+		routers.ToJson(context, nil, err)
+		return
+	}
+	ipStr := ""
+	if ip != nil {
+		ipStr = ip.Ip
+	}
 	userFavoriteEntity := &dy.UserFavoriteEntity{
-		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),
+		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ipStr),
 		SecUid:       secUid,
 		MaxCursor:    maxCursor,
 		MinCursor:    minCursor,
@@ -93,9 +128,17 @@ func (h *UserHandler) getUserFollowingBySecUid(context *gin.Context) {
 	offset, _ := strconv.Atoi(context.Query("offset"))
 	userId := context.Query("userId")
 	webDeviceDTO, _ := h.GetWebDevice(consts.SceneAuditLike)
-	ip := "" //TODO 获取IP
+	ip, err := h.IpManager.GetIp(consts.SceneCurrentValue)
+	if err != nil {
+		routers.ToJson(context, nil, err)
+		return
+	}
+	ipStr := ""
+	if ip != nil {
+		ipStr = ip.Ip
+	}
 	userFollowingEntity := &dy.UserFollowingEntity{
-		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),
+		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ipStr),
 		SecUid:       secUid,
 		Offset:       offset,
 		UserId:       userId,

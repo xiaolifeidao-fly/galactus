@@ -7,6 +7,7 @@ import (
 	"galactus/blade/internal/service/device/biz"
 	"galactus/blade/internal/service/dy"
 	"galactus/blade/internal/service/dy/dto"
+	ip "galactus/blade/internal/service/ip/biz"
 	"galactus/common/middleware/routers"
 
 	"github.com/gin-gonic/gin"
@@ -20,12 +21,14 @@ type VideoHandler struct {
 	*routers.BaseHandler
 	*biz.WebDeviceManager
 	WebDeviceService *device.WebDeviceService
+	IpManager        *ip.IpManager
 }
 
 func NewVideoHandler() *VideoHandler {
 	return &VideoHandler{
 		WebDeviceManager: biz.GetDefaultWebDeviceManager(),
 		WebDeviceService: device.NewWebDeviceService(),
+		IpManager:        ip.GetDefaultIpManager(),
 	}
 }
 
@@ -38,8 +41,16 @@ func (h *VideoHandler) RegisterHandler(engine *gin.RouterGroup) {
 
 func (h *VideoHandler) convertByVideoUrl(context *gin.Context) {
 	businessKey := context.Query("businessKey")
-	ip := "" //TODO 获取IP
-	response := dy.ConvertByVideoUrl(businessKey, ip)
+	ip, err := h.IpManager.GetIp(consts.SceneCurrentValue)
+	if err != nil {
+		routers.ToJson(context, nil, err)
+		return
+	}
+	ipStr := ""
+	if ip != nil {
+		ipStr = ip.Ip
+	}
+	response := dy.ConvertByVideoUrl(businessKey, ipStr)
 	routers.ToJson(context, response, nil)
 }
 
@@ -50,9 +61,17 @@ func (h *VideoHandler) getVideoInfo(context *gin.Context) {
 		routers.ToJson(context, nil, errors.New("webDeviceDTO is nil"))
 		return
 	}
-	ip := "" //TODO 获取IP
+	ip, err := h.IpManager.GetIp(consts.SceneCurrentValue)
+	if err != nil {
+		routers.ToJson(context, nil, err)
+		return
+	}
+	ipStr := ""
+	if ip != nil {
+		ipStr = ip.Ip
+	}
 	videoInfo := &dy.VideoInfo{
-		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),
+		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ipStr),
 		VideoId:      videoId,
 	}
 	result := dy.GetVideoItemInfo(videoInfo)
@@ -62,9 +81,17 @@ func (h *VideoHandler) getVideoInfo(context *gin.Context) {
 func (h *VideoHandler) playerVideo(context *gin.Context) {
 	videoId := context.Query("videoId")
 	webDeviceDTO, _ := h.GetWebDevice(consts.SceneAuditLike)
-	ip := "" //TODO 获取IP
+	ip, err := h.IpManager.GetIp(consts.SceneCurrentValue)
+	if err != nil {
+		routers.ToJson(context, nil, err)
+		return
+	}
+	ipStr := ""
+	if ip != nil {
+		ipStr = ip.Ip
+	}
 	videoInfo := &dy.VideoInfo{
-		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),
+		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ipStr),
 		VideoId:      videoId,
 	}
 	result, err := dy.PlayerVideo(videoInfo)
@@ -74,9 +101,17 @@ func (h *VideoHandler) playerVideo(context *gin.Context) {
 func (h *VideoHandler) loveVideo(context *gin.Context) {
 	videoId := context.Query("videoId")
 	webDeviceDTO, _ := h.GetWebDevice(consts.SceneAuditLike)
-	ip := "" //TODO 获取IP
+	ip, err := h.IpManager.GetIp(consts.SceneCurrentValue)
+	if err != nil {
+		routers.ToJson(context, nil, err)
+		return
+	}
+	ipStr := ""
+	if ip != nil {
+		ipStr = ip.Ip
+	}
 	videoInfo := &dy.VideoInfo{
-		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ip),
+		DyBaseEntity: dto.NewDyBaseEntity(webDeviceDTO, ipStr),
 		VideoId:      videoId,
 	}
 	result, err := dy.LoveVideo(videoInfo)

@@ -17,10 +17,9 @@ function getAcSign(req, res){
 function getAbogus(req, res){
     const body = req.body;
     const params = body['params'];
-    console.log("req.body    ", body);
+    // console.log("req.body    ", body);
     const ua = body['ua'];
     var data = aBogus.getAbogus(params, ua);
-    console.log("data    ", data);
     res.send({"aBogus":data});
 }
 

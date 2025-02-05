@@ -308,11 +308,6 @@ export abstract class DoorEngine<T = any> {
             Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
 
           });
-          if(){
-            Array.isArray(v) && v.length == 3 && Array.isArray(v[0]) && typeof(v[1]) == 'function' && v[2] == 'msToken' 
-
-          }
-         
         return context;
     }
 

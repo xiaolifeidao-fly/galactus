@@ -68,7 +68,7 @@ func GetVideoItemInfo(videoInfo *VideoInfo) *dto.ExtItemDTO {
 		if filterDetail != nil {
 			filterDetailMap := filterDetail.(map[string]any)
 			filterReason := filterDetailMap["filter_reason"].(string)
-			if strings.Contains(filterReason, "status_deleted") {
+			if strings.Contains(filterReason, "status_deleted") || strings.Contains(filterReason, "status_self_see") || strings.Contains(filterReason, "filterReason") || strings.Contains(filterReason, "status_audit_self_see") {
 				extItem.DataStatus = response.DELETE
 				log.Println("video delete ", " videoId ", videoInfo.VideoId)
 				return extItem

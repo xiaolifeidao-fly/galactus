@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 
 	"galactus/blade/internal/consts"
@@ -36,6 +37,17 @@ func GetDefaultZDYHttpProxyService() *ZDYHttpProxyService {
 		}
 	})
 	return defaultZDYInstance
+}
+
+func (s *ZDYHttpProxyService) GetIp() string {
+	ip, err := s.GetUserIpByProxyType(consts.SceneAuditLike, 1)
+	if err != nil {
+		return ""
+	}
+	if len(ip) == 0 {
+		return ""
+	}
+	return ip[0].IP + ":" + strconv.Itoa(ip[0].Port)
 }
 
 func (s *ZDYHttpProxyService) GetUserIpByProxyType(scene consts.Scene, fetchNum int) ([]ProxyIP, error) {
