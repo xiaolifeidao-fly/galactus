@@ -40,7 +40,7 @@ func GetDefaultZDYHttpProxyService() *ZDYHttpProxyService {
 }
 
 func (s *ZDYHttpProxyService) GetIp() string {
-	ip, err := s.GetUserIpByProxyType(consts.SceneAuditLike, 1)
+	ip, err := s.GetUserIpByProxyType(consts.SceneAuditLike)
 	if err != nil {
 		return ""
 	}
@@ -50,9 +50,13 @@ func (s *ZDYHttpProxyService) GetIp() string {
 	return ip[0].IP + ":" + strconv.Itoa(ip[0].Port)
 }
 
-func (s *ZDYHttpProxyService) GetUserIpByProxyType(scene consts.Scene, fetchNum int) ([]ProxyIP, error) {
+func (s *ZDYHttpProxyService) GetUserIpByProxyType(scene consts.Scene) ([]ProxyIP, error) {
 	var url string
 	proxyUrl, err := s.DictionaryService.GetByCode(scene.GetProxyRequestUrl())
+	if err != nil {
+		return nil, err
+	}
+	proxySuffix, err := s.DictionaryService.GetByCode(scene.GetProxyRequestSuffix())
 	if err != nil {
 		return nil, err
 	}
@@ -64,20 +68,9 @@ func (s *ZDYHttpProxyService) GetUserIpByProxyType(scene consts.Scene, fetchNum 
 	if err != nil {
 		return nil, err
 	}
-
-	if fetchNum > 0 {
-		url = fmt.Sprintf("%s?api=%s&akey=%s&count=%d&pro=1&order=2&type=3",
-			proxyUrl.Value,
-			proxyApi.Value,
-			proxyAkey.Value,
-			fetchNum)
-	} else {
-		url = fmt.Sprintf("%s?api=%s&akey=%s&pro=1&order=2&type=3",
-			proxyUrl.Value,
-			proxyApi.Value,
-			proxyAkey.Value)
-	}
-
+	url = fmt.Sprintf(proxyUrl.Value+proxySuffix.Value,
+		proxyApi.Value,
+		proxyAkey.Value)
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err

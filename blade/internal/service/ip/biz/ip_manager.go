@@ -26,7 +26,6 @@ type IpObserver interface {
 type IpManager struct {
 	// 使用 map 存储不同场景的 IP 列表
 	ipEntitiesMap map[consts.Scene][]*dto.ProxyIpDTO
-	ipNum         int
 	mu            sync.Mutex
 	baseService   *ip.IpService
 	observers     []IpObserver
@@ -39,7 +38,6 @@ func GetDefaultIpManager() *IpManager {
 			defaultIpInstance = &IpManager{
 				baseService:   ip.NewIpService(),
 				observers:     make([]IpObserver, 0),
-				ipNum:         10,
 				ipEntitiesMap: make(map[consts.Scene][]*dto.ProxyIpDTO),
 			}
 		}
@@ -97,6 +95,7 @@ func (s *IpManager) GetIp(scene consts.Scene) (*dto.ProxyIpDTO, error) {
 
 func (s *IpManager) getIpDTO(scene consts.Scene) (*dto.ProxyIpDTO, error) {
 	retryCount := 0
+	log.Printf("getIpDTO-begin timestamp:%d.%d", time.Now().Unix(), time.Now().UnixNano()%1e6)
 	for {
 		if retryCount >= maxRetries {
 			return nil, errors.New("exceeded maximum retry attempts to get valid IP")
@@ -111,7 +110,7 @@ func (s *IpManager) getIpDTO(scene consts.Scene) (*dto.ProxyIpDTO, error) {
 
 		if len(ipEntities) == 0 {
 			// 获取新的 IP 列表
-			proxyIPs, err := ip.GetDefaultZDYHttpProxyService().GetUserIpByProxyType(scene, s.ipNum)
+			proxyIPs, err := ip.GetDefaultZDYHttpProxyService().GetUserIpByProxyType(scene)
 			if err != nil {
 				retryCount++
 				log.Printf("failed to get IPs from ZDY service for scene %v, retry %d/%d: %v",
@@ -159,7 +158,7 @@ func (s *IpManager) getIpDTO(scene consts.Scene) (*dto.ProxyIpDTO, error) {
 			s.ipEntitiesMap[scene] = append(ipEntities[:randomIndex], ipEntities[randomIndex+1:]...)
 			continue
 		}
-
+		log.Printf("getIpDTO-end timestamp:%d.%d", time.Now().Unix(), time.Now().UnixNano()%1e6)
 		return ipDTO, nil
 	}
 }

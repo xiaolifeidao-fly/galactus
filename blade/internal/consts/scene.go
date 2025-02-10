@@ -58,6 +58,11 @@ func (s Scene) GetProxyRequestUrl() string {
 	return "PROXY_" + s.GetSceneName() + "_REQUEST_URL"
 }
 
+// GetProxyRequestSuffix 获取代理IP请求后缀配置key
+func (s Scene) GetProxyRequestSuffix() string {
+	return "PROXY_" + s.GetSceneName() + "_REQUEST_SUFFIX"
+}
+
 // GetProxyRequestApi 获取代理IP请求API配置key
 func (s Scene) GetProxyRequestApi() string {
 	return "PROXY_" + s.GetSceneName() + "_REQUEST_API"

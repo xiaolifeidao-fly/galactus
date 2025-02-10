@@ -14,7 +14,7 @@ def get_task_xiongmao():
 def submit_order_xiongmao(order_no, share_url):
     params = {
         "orderNo": order_no,
-        "totalNum": 100,
+        "totalNum": 300,
         "businessKey": share_url,
         "encryptionKey": "00400B1DCFCA851CB76DE97AE9D51321",
         "shopKey": "F6AF352FF95B6C8E1C8BBBB7652F43F2",
