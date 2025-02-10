@@ -40,7 +40,7 @@ func (h *TestHandler) getDevice(context *gin.Context) {
 }
 
 func (h *TestHandler) getIp(context *gin.Context) {
-	ip, err := biz2.GetDefaultIpManager().GetIp(consts.SceneCollectDevice)
+	ip, err := biz2.GetDefaultIpManager().GetIp(consts.SceneTest)
 	routers.ToJson(context, ip, err)
 }
 

@@ -9,6 +9,7 @@ const (
 	SceneAuditLike                  // 审核点赞
 	SceneCurrentValue               // 当前值
 	SceneAuditFollow                // 审核关注
+	SceneTest                       // 测试
 )
 
 // DeviceConfigType 设备配置类型
@@ -31,6 +32,7 @@ var sceneNames = map[Scene]string{
 	SceneAuditLike:     "AUDIT_LIKE",
 	SceneCurrentValue:  "CURRENT",
 	SceneAuditFollow:   "AUDIT_FOLLOW",
+	SceneTest:          "TEST",
 }
 
 // GetSceneName 获取场景名称
