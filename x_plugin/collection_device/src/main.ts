@@ -11,19 +11,22 @@ async function sleep(ms: number){
 }
 
 async function collectDevice(num : number){
-    const engine = new DyEngine<{}>("dy_device_collect", false);
+    const engine = new DyEngine<{}>("dy_device_collect");
     try{
         const monitor = new DyDeviceCollectMonitor(num);
         const page = await engine.init();
         if(!page){ 
             return;
         }
+        //return await engine.openWaitMonitor(page, "https://www.browserscan.net/", monitor);
         return await engine.openWaitMonitor(page, "https://www.douyin.com/?recommend=1", monitor);
+    }catch(e){  
+        console.log("collectDevice error ", e);
     }finally{
         console.log("collectDevice finally ", num);
         try{
             await engine.closeContext();
-            await sleep(1000);
+            await sleep(2000);
         }catch(e){
             console.error("collectDevice close error", e);
         }

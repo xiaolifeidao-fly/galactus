@@ -80,6 +80,10 @@ func (r *WebDeviceRepository) MinIdByStartIndex(startIndex int64) (int64, error)
 	return int64(device.Id), nil
 }
 
+func (r *WebDeviceRepository) CountByWebId(webid string) (int64, error) {
+	return r.Count("select count(1) from web_device where webid = ? active = 1", webid)
+}
+
 func (r *WebDeviceRepository) GetByUdIdAndOpenUdIdAndSerial(udId, openUdId, serial string) (*WebDevice, error) {
 	return r.GetOne("select * from web_device where ud_id = ? and open_ud_id = ? and serial = ? and active = 1", udId, openUdId, serial)
 }

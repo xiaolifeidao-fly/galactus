@@ -37,6 +37,12 @@ func (r *Repository[T]) GetOne(sql string, values ...interface{}) (T, error) {
 	return *repoValue, nil
 }
 
+func (r *Repository[T]) Count(sql string, values ...interface{}) (int64, error) {
+	var count int64
+	r.Db.Raw(sql, values...).Count(&count)
+	return count, nil
+}
+
 func (r *Repository[T]) GetList(sql string, values ...interface{}) ([]T, error) {
 	var entities []T
 	err := r.Db.Raw(sql, values...).Find(&entities).Error

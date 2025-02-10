@@ -4,6 +4,7 @@ import { Browser, chromium, devices,firefox, BrowserContext, Page, Route ,Reques
 import { Monitor, MonitorChain, MonitorRequest, MonitorResponse } from './monitor/monitor';
 import { DoorEntity } from './entity';
 import { ActionChain, ActionResult } from './element/element';
+import { getIp } from '@src/ip/ip';
 
 const browserMap = new Map<string, Browser>();
 
@@ -88,22 +89,19 @@ export abstract class DoorEngine<T = any> {
     public async doBeforeRequest(router : Route, request: Request, headers: { [key: string]: string; }){
         let isFilter = false;
         for(const monitor of this.monitors){
-           
-            if(!(monitor instanceof MonitorRequest)){
-                continue;
-            }
-
             if(await monitor.filter(request.url(), request.resourceType(), request.method(), headers)){
                 await router.abort();
-                console.log("filter request ", request.url());
                 isFilter = true;
+                continue;
+            }
+            if(!(monitor instanceof MonitorRequest)){
                 continue;
             }
             if(monitor.finishTag){
                 continue;
             }
 
-            if(!await monitor.isMatch(request.url(), request.method(), headers)){
+            if(!await monitor.isMatch(request.url(), request.method(), headers, request.resourceType())){
                 continue;
             }
             const requestMonitor = monitor as MonitorRequest<T>;
@@ -165,7 +163,9 @@ export abstract class DoorEngine<T = any> {
         try{
             this.addMonitor(monitor);
             await this.startMonitor();
-            await page.goto(url, { timeout: 5000});
+            await page.goto(url, {
+                timeout : 60000
+            });
         }catch(e){
             console.error("openWaitMonitor error", e);
         }
@@ -272,7 +272,8 @@ export abstract class DoorEngine<T = any> {
         if(!this.browser){
             return;
         }
-        const context = await this.browser?.newContext({
+        const ip = await getIp();
+        const contextConfig : {[key: string]: any} = {
             bypassCSP: true,
             userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36', 
             extraHTTPHeaders: {
@@ -280,12 +281,20 @@ export abstract class DoorEngine<T = any> {
                 'sec-ch-ua-mobile': '?0', // 设置为移动设备
                 'sec-ch-ua-platform': '"macOS"',
               },
-              locale: 'zh-CN', 
-            // proxy: {
-            //     server: 'http://127.0.0.1:8888',
-            // },
+            locale: 'zh-CN', 
+            webrtc: {
+                // 这里可以设置为 false 来禁用 WebRTC
+                enabled: false
+            },
             viewport: { width: 800, height: 1080 }
-        });
+        }
+        console.log("ip", ip);
+        if(ip){
+            contextConfig.proxy = {
+                server: ip,
+            }
+        }
+        const context = await this.browser?.newContext(contextConfig);
 
         await context.addInitScript(() => {
             // 模拟不同的 navigator 信息
@@ -326,6 +335,10 @@ export abstract class DoorEngine<T = any> {
                 '--disable-accelerated-2d-canvas', '--disable-webgl', '--disable-software-rasterizer',
                 '--no-sandbox', // 取消沙箱，某些网站可能会检测到沙箱模式
                 '--disable-setuid-sandbox',
+                '--disable-webrtc-encryption',
+                '--disable-webrtc-hw-decoding',
+                '--disable-webrtc-hw-encoding',
+                '--disable-extensions-file-access-check',
                 '--disable-blink-features=AutomationControlled',  // 禁用浏览器自动化控制特性
               ]
         });

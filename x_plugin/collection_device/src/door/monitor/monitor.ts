@@ -20,7 +20,7 @@ export abstract class Monitor<T = any> {
     allowRepeat: boolean = false;
     startTag: boolean = false;
 
-    constructor(timeout: number = 30000){
+    constructor(timeout: number = 60000){
         this.timeout = timeout;
         this.eventEmitter = new EventEmitter();
         this.waitPromise = new Promise<DoorEntity<T>>((resolve) => {
@@ -55,14 +55,15 @@ export abstract class Monitor<T = any> {
         const url = response.url();
         const method = response.request().method();
         const headers = await response.request().allHeaders();
-        return await this.isMatch(url, method, headers);
+        const resourceType = response.request().resourceType();
+        return await this.isMatch(url, method, headers, resourceType);
     }
 
     async filter(url : string, resourceType : string, method: string, headers: {[key: string]: string;}){
         return false;
     }
 
-    abstract isMatch(url: string, method: string, headers: {[key: string]: string;}): Promise<boolean>;  
+    abstract isMatch(url: string, method: string, headers: {[key: string]: string;}, resourceType : string): Promise<boolean>;  
 
     setFinishTag(finishTag: boolean){
         if(this.allowRepeat){

@@ -5,6 +5,7 @@ import { Monitor, MonitorChain, MonitorRequest, MonitorResponse } from "@src/doo
 export abstract class DyMonitorRequest<T> extends MonitorRequest<T> {
 
 
+
 }
 
 export abstract class DyMonitorResponse<T> extends MonitorResponse<T> {
@@ -13,7 +14,14 @@ export abstract class DyMonitorResponse<T> extends MonitorResponse<T> {
         return "DY";
     }
 
-    public async isMatch(url : string, method: string, headers: { [key: string]: string; }): Promise<boolean> {
+    async filter(url: string, resourceType: string, method: string, headers: { [key: string]: string; }): Promise<boolean> {
+        if (url.includes('png') || url.includes('.png') || url.includes('.jpg') || url.includes('.jpeg') || url.includes('.gif') || url.includes('.mp4') || url.includes('.webm')) {
+            return true;
+        } 
+        return false;
+    }
+
+    public async isMatch(url : string, method: string, headers: { [key: string]: string; }, resourceType: string): Promise<boolean> {
         if(url.includes(".js")){
             return false;
         }
