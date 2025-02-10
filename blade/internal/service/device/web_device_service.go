@@ -20,7 +20,7 @@ func NewWebDeviceService() *WebDeviceService {
 // Save 保存设备信息
 func (s *WebDeviceService) Save(webDeviceDTO *dto.WebDeviceDTO) (*dto.WebDeviceDTO, error) {
 	device := db.ToPO[repository.WebDevice](webDeviceDTO)
-	countNum, err := s.webDeviceRepository.Count(device.Webid)
+	countNum, err := s.webDeviceRepository.CountByWebId(device.Webid)
 	if err != nil {
 		return nil, err
 	}
