@@ -63,9 +63,19 @@ func (s *IpManager) InitIp() error {
 
 	// 初始化map
 	s.ipEntitiesMap = make(map[consts.Scene][]*dto.ProxyIpDTO)
+	now := time.Now()
 
-	// 根据Type将IP分配到对应的场景
+	// 根据Type将IP分配到对应的场景，同时检查过期时间
 	for _, ip := range proxyIps {
+		// 检查IP是否过期
+		if ip.ExpireTime.Before(now) {
+			// 删除过期的IP
+			if err := s.baseService.DeleteProxyIp(int64(ip.Id)); err != nil {
+				log.Printf("failed to delete expired IP from database: %v", err)
+			}
+			continue
+		}
+
 		// 遍历所有场景，找到匹配的场景
 		for _, scene := range []consts.Scene{
 			consts.SceneCollectDevice,
@@ -79,6 +89,12 @@ func (s *IpManager) InitIp() error {
 			}
 		}
 	}
+
+	// 记录每个场景的有效IP数量
+	for scene, ips := range s.ipEntitiesMap {
+		log.Printf("Scene %v has %d valid IPs", scene.GetSceneName(), len(ips))
+	}
+
 	return nil
 }
 
