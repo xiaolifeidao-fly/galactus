@@ -4,6 +4,9 @@
 import requests
 import json
 import logging
+import re
+import time
+import random
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -123,14 +126,31 @@ class DYLoveProtocol:
         try:
             logger.info(f"获取签名，请求数据: {sign_data}")
             response = requests.post(self.sign_server, json=sign_data)
+            
+            # 先记录原始响应内容，无论是否成功
+            logger.info(f"签名服务器响应状态码: {response.status_code}")
+            logger.info(f"签名服务器响应头: {dict(response.headers)}")
+            logger.info(f"签名服务器原始响应内容: {response.text}")
+            
             response.raise_for_status()
             
             sign_result = response.json()
             logger.info(f"获取签名成功: {sign_result}")
             
             return sign_result
+        except requests.exceptions.RequestException as e:
+            # 增强异常日志，记录完整响应内容
+            error_msg = f"获取签名失败: {str(e)}"
+            try:
+                if hasattr(e, 'response') and e.response:
+                    error_msg += f"\n响应状态码: {e.response.status_code}"
+                    error_msg += f"\n响应内容: {e.response.text}"
+            except Exception:
+                pass
+            logger.error(error_msg)
+            raise
         except Exception as e:
-            logger.error(f"获取签名失败: {str(e)}")
+            logger.error(f"获取签名失败（非请求异常）: {str(e)}")
             raise
     
     def like_video(self, aweme_id, token=None, device_info=None):
@@ -213,25 +233,203 @@ class DYLoveProtocol:
         try:
             logger.info(f"发送点赞请求，视频ID: {aweme_id}")
             response = requests.post(url, headers=headers, data=data)
+            
+            # 先记录原始响应内容，无论是否成功
+            logger.info(f"点赞请求响应状态码: {response.status_code}")
+            logger.info(f"点赞请求响应头: {dict(response.headers)}")
+            logger.info(f"点赞请求原始响应内容: {response.text}")
+            
             response.raise_for_status()
+            
+            # 尝试解析JSON前先检查响应内容是否为空
+            if not response.text.strip():
+                logger.warning("点赞请求返回空响应")
+                return {"status_code": -1, "message": "空响应"}
             
             result = response.json()
             logger.info(f"点赞结果: {result}")
             
             return result
-        except Exception as e:
-            logger.error(f"点赞请求失败: {str(e)}")
+        except requests.exceptions.JSONDecodeError as e:
+            # JSON解析错误，记录原始响应内容
+            error_msg = f"点赞请求返回数据解析失败: {str(e)}"
+            error_msg += f"\n响应状态码: {response.status_code}"
+            error_msg += f"\n响应头信息: {dict(response.headers)}"
+            error_msg += f"\n原始响应内容: {response.text}"
+            logger.error(error_msg)
+            # 返回错误信息而不是抛出异常，让程序继续运行
+            return {"status_code": -1, "message": f"JSON解析失败: {str(e)}", "raw_response": response.text}
+        except requests.exceptions.RequestException as e:
+            # 请求异常，记录完整响应内容
+            error_msg = f"点赞请求网络异常: {str(e)}"
+            try:
+                if hasattr(e, 'response') and e.response:
+                    error_msg += f"\n响应状态码: {e.response.status_code}"
+                    error_msg += f"\n响应头信息: {dict(e.response.headers)}"
+                    error_msg += f"\n响应内容: {e.response.text}"
+            except Exception:
+                pass
+            logger.error(error_msg)
             raise
+        except Exception as e:
+            logger.error(f"点赞请求其他异常: {str(e)}")
+            raise
+    
+    def get_task(self, uid, sec_uid, code="MY_LOVE", uid_type="DY"):
+        """
+        获取点赞任务
+        
+        Args:
+            uid: 用户ID
+            sec_uid: 安全用户ID
+            code: 任务代码，默认为MY_LOVE
+            uid_type: 用户类型，默认为DY
+            
+        Returns:
+            dict: 任务数据
+        """
+        url = f"http://111.180.188.251:9999/batch/tasks/get?uid={uid}&uidType={uid_type}&code={code}&secUid={sec_uid}"
+        headers = {
+            "PUB_TOKEN": "b07a1a53-8c8a-4b15-b975-c023c67d6b8a"
+        }
+        
+        try:
+            logger.info(f"获取任务，用户ID: {uid}")
+            response = requests.get(url, headers=headers)
+            
+            # 先记录原始响应内容，无论是否成功
+            logger.info(f"获取任务响应状态码: {response.status_code}")
+            logger.info(f"获取任务响应头: {dict(response.headers)}")
+            logger.info(f"获取任务原始响应内容: {response.text}")
+            
+            response.raise_for_status()
+            
+            # 尝试解析JSON前先检查响应内容是否为空
+            if not response.text.strip():
+                logger.warning("获取任务返回空响应")
+                return {"status": -1, "message": "空响应"}
+            
+            result = response.json()
+            logger.info(f"获取任务结果: {result}")
+            
+            return result
+        except requests.exceptions.JSONDecodeError as e:
+            # JSON解析错误，记录原始响应内容
+            error_msg = f"获取任务返回数据解析失败: {str(e)}"
+            error_msg += f"\n响应状态码: {response.status_code}"
+            error_msg += f"\n响应头信息: {dict(response.headers)}"
+            error_msg += f"\n原始响应内容: {response.text}"
+            logger.error(error_msg)
+            # 返回错误信息而不是抛出异常，让程序继续运行
+            return {"status": -1, "message": f"JSON解析失败: {str(e)}", "raw_response": response.text}
+        except requests.exceptions.RequestException as e:
+            # 请求异常，记录完整响应内容
+            error_msg = f"获取任务网络异常: {str(e)}"
+            try:
+                if hasattr(e, 'response') and e.response:
+                    error_msg += f"\n响应状态码: {e.response.status_code}"
+                    error_msg += f"\n响应头信息: {dict(e.response.headers)}"
+                    error_msg += f"\n响应内容: {e.response.text}"
+            except Exception:
+                pass
+            logger.error(error_msg)
+            raise
+        except Exception as e:
+            logger.error(f"获取任务其他异常: {str(e)}")
+            raise
+    
+    def extract_video_id(self, task_url):
+        """
+        从任务URL中提取视频ID
+        
+        Args:
+            task_url: 任务URL
+            
+        Returns:
+            str: 视频ID
+        """
+        # 提取形如 https://www.douyin.com/video/7454424455373262139 中的ID
+        match = re.search(r'/video/(\d+)', task_url)
+        if match:
+            return match.group(1)
+        return None
+    
+    def run_tasks(self, uid, sec_uid, max_tasks=100):
+        """
+        运行点赞任务
+        
+        Args:
+            uid: 用户ID
+            sec_uid: 安全用户ID
+            max_tasks: 最大任务数，默认100
+        """
+        # 配置文件日志
+        file_handler = logging.FileHandler('dy_love.log', encoding='utf-8')
+        file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+        logger.addHandler(file_handler)
+        
+        task_count = 0
+        
+        logger.info(f"开始任务循环，用户ID: {uid}, 安全用户ID: {sec_uid}")
+        
+        while True:
+            try:
+                # 获取任务
+                task_result = self.get_task(uid, sec_uid)
+                
+                if task_result.get("status") != 0 or not task_result.get("data"):
+                    logger.warning("获取任务失败或没有可用任务")
+                    time.sleep(60)  # 如果没有任务，等待60秒
+                    continue
+                
+                task_data = task_result.get("data")
+                task_url = task_data.get("taskUrl")
+                
+                # 提取视频ID
+                video_id = self.extract_video_id(task_url)
+                if not video_id:
+                    logger.warning(f"无法从URL提取视频ID: {task_url}")
+                    time.sleep(10)
+                    continue
+                
+                # 执行点赞
+                logger.info(f"开始点赞视频: {video_id}, URL: {task_url}")
+                like_result = self.like_video(video_id)
+                
+                # 输出点赞结果
+                if like_result.get("status_code") == 0:
+                    logger.info(f"点赞成功，视频ID: {video_id}")
+                else:
+                    logger.warning(f"点赞失败，视频ID: {video_id}, 结果: {like_result}")
+                
+                # 计数器增加
+                task_count += 1
+                logger.info(f"已完成 {task_count}/{max_tasks} 个任务")
+                
+                # 达到最大任务数，重新开始循环
+                if task_count >= max_tasks:
+                    logger.info(f"已达到最大任务数 {max_tasks}，重新开始循环")
+                    task_count = 0
+                
+                # 随机等待时间，以对抗风控
+                sleep_time = random.randint(45, 120)
+                logger.info(f"随机等待 {sleep_time} 秒...")
+                time.sleep(sleep_time)
+                
+            except Exception as e:
+                logger.error(f"任务执行出错: {str(e)}")
+                # 打印完整的异常堆栈信息，便于调试
+                import traceback
+                logger.error(f"异常堆栈: {traceback.format_exc()}")
+                time.sleep(30)  # 出错后等待30秒后继续
 
 # 示例用法
 if __name__ == "__main__":
     # 创建点赞协议实例
     dy_love = DYLoveProtocol()
     
-    # 点赞示例视频
-    try:
-        # result = dy_love.like_video("7478180544006737204")
-        result = dy_love.like_video("7453475040403705147")
-        print(f"点赞结果: {json.dumps(result, ensure_ascii=False, indent=2)}")
-    except Exception as e:
-        print(f"点赞失败: {str(e)}") 
+    # 运行任务循环
+    dy_love.run_tasks(
+        uid="177336881", 
+        sec_uid="MS4wLjABAAAA7Zd098eJ-fKLpj169UBS8PPebs0TqIzz0LXD34hbYHb"
+    ) 

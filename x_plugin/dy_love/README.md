@@ -1,4 +1,4 @@
-# dy_love_cursor
+# dy_love
 
 这是一个使用Playwright自动化打开抖音网页版并处理登录流程的项目。
 
@@ -20,7 +20,7 @@
 2. 安装依赖
 
 ```bash
-cd x_plugin/dy_love_cursor
+cd x_plugin/dy_love
 npm install
 # 或者使用 pnpm
 pnpm install
