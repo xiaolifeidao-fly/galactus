@@ -24,11 +24,15 @@ async function startDouyinLogin() {
             headless: false,
             executablePath: process.env.CHROME_PATH,
             args: [
-                '--start-maximized', // 最大化窗口
-                '--window-size=1920,1080',
-                '--disable-infobars',
-                '--no-sandbox',
-            ]
+                '--disable-accelerated-2d-canvas', '--disable-webgl', '--disable-software-rasterizer',
+                '--no-sandbox', // 取消沙箱，某些网站可能会检测到沙箱模式
+                '--disable-setuid-sandbox',
+                '--disable-webrtc-encryption',
+                '--disable-webrtc-hw-decoding',
+                '--disable-webrtc-hw-encoding',
+                '--disable-extensions-file-access-check',
+                '--disable-blink-features=AutomationControlled',  // 禁用浏览器自动化控制特性
+              ]
         });
         console.log("浏览器启动成功");
         

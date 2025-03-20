@@ -125,6 +125,9 @@ export abstract class Monitor<T = any> {
         });
     }
 
+    setTimeout(timeout: number){
+        this.timeout = timeout;
+    }
 
     async waitForAction(): Promise<DoorEntity<T>>{
         return await this.waitPromise;

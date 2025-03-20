@@ -11,9 +11,10 @@ async function sleep(ms: number){
 }
 
 async function collectDevice(num : number){
-    const engine = new DyEngine<{}>("dy_device_collect");
+    const engine = new DyEngine<{}>("dy_device_collect", false);
     try{
         const monitor = new DyDeviceCollectMonitor(num);
+        monitor.setTimeout(200000);
         const page = await engine.init();
         if(!page){ 
             return;
@@ -33,19 +34,24 @@ async function collectDevice(num : number){
     }  
 }
 
+function getTimeYYMMDDHHMMSS(){
+    const time = new Date();
+    return time.getFullYear() + "-" + (time.getMonth() + 1) + "-" + time.getDate() + " " + time.getHours() + ":" + time.getMinutes() + ":" + time.getSeconds();
+}   
 
 async function main(){
     const num = process.env.COLLECT_NUM;
+
     console.log("COLLECT_NUM is ", num);
     if(!num){
         console.log("COLLECT_NUM is not set");
         return;
     }
     for(let i = 0; i < Number(num); i++){
-        console.log("collectDevice start ", i);
+        console.log("collectDevice start ", getTimeYYMMDDHHMMSS(), i);
         await collectDevice(i);
         await sleep(2000);
-        console.log("collectDevice end ", i);
+        console.log("collectDevice end ", getTimeYYMMDDHHMMSS(), i);
     }
 }
 

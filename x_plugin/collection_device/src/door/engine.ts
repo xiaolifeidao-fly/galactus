@@ -282,10 +282,10 @@ export abstract class DoorEngine<T = any> {
                 'sec-ch-ua-platform': '"macOS"',
               },
             locale: 'zh-CN', 
-            webrtc: {
-                // 这里可以设置为 false 来禁用 WebRTC
-                enabled: false
-            },
+            // webrtc: {
+            //     // 这里可以设置为 false 来禁用 WebRTC
+            //     enabled: false
+            // },
             viewport: { width: 800, height: 1080 }
         }
         console.log("ip", ip);
