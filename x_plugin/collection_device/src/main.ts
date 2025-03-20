@@ -11,7 +11,7 @@ async function sleep(ms: number){
 }
 
 async function collectDevice(num : number){
-    const engine = new DyEngine<{}>("dy_device_collect", false);
+    const engine = new DyEngine<{}>("dy_device_collect");
     try{
         const monitor = new DyDeviceCollectMonitor(num);
         monitor.setTimeout(200000);
